@@ -4,17 +4,16 @@ import Codec.Crypto.RSA
 import Control.Applicative
 import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Lazy.Char8 as LC (pack)
-import qualified Network.DNS as DNS
-import Network.DomainAuth.DK.Types
+import Network.DNS (Domain)
+import qualified Network.DNS as DNS hiding (Domain)
 import Network.DomainAuth.Mail
 import qualified Network.DomainAuth.Pubkey.Base64 as B
 import qualified Network.DomainAuth.Pubkey.Der as D
 
-lookupPublicKey :: DNS.Resolver -> DK -> IO (Maybe PublicKey)
-lookupPublicKey resolver dk = decode <$> lookupPublicKey' resolver domain
+lookupPublicKey :: DNS.Resolver -> Domain -> IO (Maybe PublicKey)
+lookupPublicKey resolver domain = decode <$> lookupPublicKey' resolver domain
   where
     decode = (>>= return . decodeRSAPublicyKey)
-    domain = dkSelector dk ++ "._domainkey." ++ dkDomain dk
 
 lookupPublicKey' :: DNS.Resolver -> String -> IO (Maybe L.ByteString)
 lookupPublicKey' resolver domain = extractPub <$> DNS.lookupTXT resolver domain

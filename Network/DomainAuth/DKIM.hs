@@ -17,14 +17,15 @@ import Network.DomainAuth.Types
 runDKIM :: Resolver -> Mail -> IO DAResult
 runDKIM resolver mail = dkim1
   where
-    dkim1     = maybe (return DANone)      dkim2 $ lookupField dkimFieldkimey mail
+    dkim1     = maybe (return DANone)      dkim2 $ lookupField dkimFieldKey mail
     dkim2 rdkim = maybe (return DAPermError) dkim3 $ parseDKIM rdkim
     dkim3     = runDKIM' resolver mail
 
 runDKIM' :: Resolver -> Mail -> DKIM -> IO DAResult
 runDKIM' resolver mail dkim = maybe DATempError (verify sig cmail) <$> pub
   where
-    pub = lookupPublicKey resolver dkim
+    pub = lookupPublicKey resolver dom
+    dom = dkimSelector dkim ++ "._domainkey." ++ dkimDomain dkim
     sig = B.decode (dkimSignature dkim)
     cmail = prepareDKIM dkim mail
     verify s c p = if verifyDKIM p s c then DAPass else DAFail

@@ -7,7 +7,6 @@ module Network.DomainAuth.DKIM.Verify (
 import Codec.Crypto.RSA
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Char
-import qualified Data.Map as M
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
 import Network.DomainAuth.Utils

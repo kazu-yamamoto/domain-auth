@@ -24,7 +24,8 @@ runDK resolver mail = dk1
 runDK' :: Resolver -> Mail -> DK -> IO DAResult
 runDK' resolver mail dk = maybe DATempError (verify sig cmail) <$> pub
   where
-    pub = lookupPublicKey resolver dk
+    pub = lookupPublicKey resolver dom
+    dom = dkSelector dk ++ "._domainkey." ++ dkDomain dk
     sig = B.decode (dkSignature dk)
     cmail = prepareDK dk mail
     verify s c p = if verifyDK p s c then DAPass else DAFail
