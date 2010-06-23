@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Test where
 
+import qualified Data.ByteString.Lazy.Char8 as LC (pack,unpack)
 import Data.IP
 import Network.DNS as DNS hiding (answer)
 import Network.DomainAuth
 import Network.DomainAuth.PRD.Lexer
+import Network.DomainAuth.Pubkey.RSAPub
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
@@ -45,6 +47,24 @@ tests = [
        , testCase "structured 2" test_structured2
        , testCase "structured 3" test_structured3
        , testCase "structured 4" test_structured4
+       ]
+  , testGroup "TaggedValue" [
+         testCase "parse" test_parse
+       , testCase "parse2" test_parse2
+       ]
+  , testGroup "Public Key" [
+         testCase "lookup yahoo" test_lookup_yahoo
+       , testCase "lookup gmail" test_lookup_gmail
+       , testCase "lookup iij" test_lookup_iij
+       ]
+  , testGroup "DK" [
+         testCase "dk yahoo" test_dk_yahoo
+       , testCase "dk gmail" test_dk_gmail
+       ]
+  , testGroup "Mail" [
+         testCase "dk yahoo" test_mail
+       , testCase "dk yahoo" test_mail2
+       , testCase "dk yahoo" test_mail3
        ]
   ]
 
@@ -240,6 +260,95 @@ test_structured4 = parse structured inp @?= out
   where
     inp = "From: Pete(A nice \\) chap) <pete(his account)@silly.test(his host)>\n"
     out = Just ["From",":","Pete","<","pete","@","silly",".","test",">"]
+
+----------------------------------------------------------------
+
+test_parse :: Assertion
+test_parse = parseTaggedValue input @?= output
+  where
+    input = " k = rsa ; p= MIGfMA0G; n=A 1024 bit key;"
+    output = [("k","rsa"),("p","MIGfMA0G"),("n","A1024bitkey")]
+
+test_parse2 :: Assertion
+test_parse2 = parseTaggedValue input @?= output
+  where
+    input = " k = \nrsa ;\n p= MIGfMA0G;\n n=A 1024 bit key"
+    output = [("k","rsa"),("p","MIGfMA0G"),("n","A1024bitkey")]
+
+----------------------------------------------------------------
+
+test_lookup_yahoo :: Assertion
+test_lookup_yahoo = do
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    pub0 <- readFile "data/yahoo.pub"
+    DNS.withResolver rs $ \resolver -> do
+        Just pub1 <- lookupPublicKey' resolver "dk200510._domainkey.yahoo.co.jp"
+        LC.unpack pub1 @?= init pub0 -- removing "\n"
+
+test_lookup_gmail :: Assertion
+test_lookup_gmail = do
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    pub0 <- readFile "data/gmail.pub"
+    DNS.withResolver rs $ \resolver -> do
+        Just pub1 <- lookupPublicKey' resolver "gamma._domainkey.gmail.com"
+        LC.unpack pub1 @?= init pub0 -- removing "\n"
+
+test_lookup_iij :: Assertion
+test_lookup_iij = do
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    pub0 <- readFile "data/iij.pub"
+    DNS.withResolver rs $ \resolver -> do
+        Just pub1 <- lookupPublicKey' resolver "omgo1._domainkey.iij.ad.jp"
+        LC.unpack pub1 @?= init pub0 -- removing "\n"
+
+----------------------------------------------------------------
+
+test_dk_yahoo :: Assertion
+test_dk_yahoo = do
+    mail <- readMail "data/yahoo"
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    DNS.withResolver rs $ \resolver -> do
+        res <- runDK resolver mail
+        res @?= DAPass
+
+test_dk_gmail :: Assertion
+test_dk_gmail = do
+    mail <- readMail "data/gmail"
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    DNS.withResolver rs $ \resolver -> do
+        res <- runDK resolver mail
+        res @?= DAPass
+----------------------------------------------------------------
+
+test_mail :: Assertion
+test_mail = getMail inp @?= out
+  where
+    inp = LC.pack "from: val\nto: val\n\nbody"
+    out = finalizeMail
+        $ pushBody "body"
+        $ pushField "to" "val"
+        $ pushField "from" "val"
+        initialMail
+
+test_mail2 :: Assertion
+test_mail2 = getMail inp @?= out
+  where
+    inp = LC.pack "from: val\tval\nto: val\n\nbody"
+    out = finalizeMail
+        $ pushBody "body"
+        $ pushField "to" "val"
+        $ pushField "from" "val\tval"
+        initialMail
+
+test_mail3 :: Assertion
+test_mail3 = getMail inp @?= out
+  where
+    inp = LC.pack "from: val\nto: val\n"
+    out = finalizeMail
+        $ pushBody ""
+        $ pushField "to" "val"
+        $ pushField "from" "val"
+        initialMail
 
 ----------------------------------------------------------------
 
