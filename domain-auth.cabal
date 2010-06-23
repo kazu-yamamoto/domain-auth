@@ -25,6 +25,7 @@ library
                         Network.DomainAuth.DK.Parser
                         Network.DomainAuth.DK.Types
                         Network.DomainAuth.DK.Verify
+                        Network.DomainAuth.DKIM.Parser
                         Network.DomainAuth.DKIM.Types
                         Network.DomainAuth.DKIM.Verify
                         Network.DomainAuth.Pubkey.Base64
