@@ -19,7 +19,7 @@ data DKIM = DKIM {
   , dkimFields      :: [L.ByteString]
   , dkimLength      :: Maybe Int
   , dkimSelector0   :: L.ByteString
-  }
+  } deriving (Eq,Show)
 
 dkimDomain :: DKIM -> Domain
 dkimDomain = L.unpack . dkimDomain0

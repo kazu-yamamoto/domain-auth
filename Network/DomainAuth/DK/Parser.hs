@@ -16,7 +16,7 @@ parseDK val = toDK domkey
   where
     (ts,vs) = unzip $ parseTaggedValue val
     fs = map tagToSetter ts
-    tagToSetter tag = fromMaybe (\ _ mdk -> mdk) $ lookup (L.head tag) dkTagDB
+    tagToSetter tag = fromMaybe (\_ mdk -> mdk) $ lookup (L.head tag) dkTagDB
     pfs = zipWith ($) fs vs
     domkey = foldr ($) initialMDK pfs
     toDK mdk = do

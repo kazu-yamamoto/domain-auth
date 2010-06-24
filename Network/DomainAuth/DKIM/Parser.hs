@@ -16,10 +16,31 @@ parseDKIM val = toDKIM domkey
   where
     (ts,vs) = unzip $ parseTaggedValue val
     fs = map tagToSetter ts
-    tagToSetter tag = fromMaybe (\ _ mdkim -> mdkim) $ lookup (L.unpack tag) dkimTagDB
+    tagToSetter tag = fromMaybe (\_ mdkim -> mdkim) $ lookup (L.unpack tag) dkimTagDB
     pfs = zipWith ($) fs vs
     domkey = foldr ($) initialMDKIM pfs
-    toDKIM mdkim = undefined
+    toDKIM mdkim = do
+        ver <- mdkimVersion     mdkim
+        alg <- mdkimSigAlgo     mdkim
+        sig <- mdkimSignature   mdkim
+        bhs <- mdkimBodyHash    mdkim
+        hca <- mdkimHeaderCanon mdkim
+        bca <- mdkimBodyCanon   mdkim
+        dom <- mdkimDomain      mdkim
+        fld <- mdkimFields      mdkim
+        sel <- mdkimSelector    mdkim
+        return DKIM {
+            dkimVersion     = ver
+          , dkimSigAlgo     = alg
+          , dkimSignature   = sig
+          , dkimBodyHash    = bhs
+          , dkimHeaderCanon = hca
+          , dkimBodyCanon   = bca
+          , dkimDomain0     = dom
+          , dkimFields      = fld
+          , dkimLength      = mdkimLength mdkim
+          , dkimSelector0   = sel
+          }
 
 data MDKIM = MDKIM {
     mdkimVersion     :: Maybe L.ByteString
@@ -67,8 +88,8 @@ setDkimVersion :: DKIMSetter
 setDkimVersion ver dkim = dkim { mdkimVersion = Just ver }
 
 setDkimSigAlgo :: DKIMSetter
-setDkimSigAlgo "sha1" dkim = dkim { mdkimSigAlgo = Just RSA_SHA1 }
-setDkimSigAlgo "sha256" dkim = dkim { mdkimSigAlgo = Just RSA_SHA256 }
+setDkimSigAlgo "rsa-sha1" dkim = dkim { mdkimSigAlgo = Just RSA_SHA1 }
+setDkimSigAlgo "rsa-sha256" dkim = dkim { mdkimSigAlgo = Just RSA_SHA256 }
 setDkimSigAlgo _ _ = error "setDkimSigAlgo"
 
 setDkimSignature :: DKIMSetter
