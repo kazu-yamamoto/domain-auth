@@ -62,6 +62,7 @@ tests = [
   , testGroup "Parser" [
          testCase "dk field" test_dk_field
        , testCase "dkim field" test_dkim_field
+       , testCase "dkim field2" test_dkim_field2
        ]
   , testGroup "DK" [
          testCase "dk yahoo" test_dk_yahoo
@@ -318,7 +319,13 @@ test_dk_field = parseDK inp @?= out
 test_dkim_field :: Assertion
 test_dkim_field = parseDKIM inp @?= out
   where
-   inp = "v=1; a=rsa-sha256; s=brisbane; d=example.com;\n         c=simple/simple; q=dns/txt; i=joe@football.example.com;\n         h=Received : From : To : Subject : Date : Message-ID;\n         bh=2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=;\n         b=AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB\n           4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHut\n           KVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV\n           4bmp/YzhwvcubU4=;"
+   inp = "v=1; a=rsa-sha256; s=brisbane; d=example.com;\n         c=relaxed/simple; q=dns/txt; i=joe@football.example.com;\n         h=Received : From : To : Subject : Date : Message-ID;\n         bh=2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=;\n         b=AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB\n           4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHut\n           KVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV\n           4bmp/YzhwvcubU4=;"
+   out = Just DKIM {dkimVersion = "1", dkimSigAlgo = RSA_SHA256, dkimSignature = "AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHutKVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV4bmp/YzhwvcubU4=", dkimBodyHash = "2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=", dkimHeaderCanon = DKIM_RELAXED, dkimBodyCanon = DKIM_SIMPLE, dkimDomain0 = "example.com", dkimFields = ["Received","From","To","Subject","Date","Message-ID"], dkimLength = Nothing, dkimSelector0 = "brisbane"}
+
+test_dkim_field2 :: Assertion
+test_dkim_field2 = parseDKIM inp @?= out
+  where
+   inp = "v=1; a=rsa-sha256; s=brisbane; d=example.com;\n         q=dns/txt; i=joe@football.example.com;\n         h=Received : From : To : Subject : Date : Message-ID;\n         bh=2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=;\n         b=AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB\n           4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHut\n           KVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV\n           4bmp/YzhwvcubU4=;"
    out = Just DKIM {dkimVersion = "1", dkimSigAlgo = RSA_SHA256, dkimSignature = "AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHutKVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV4bmp/YzhwvcubU4=", dkimBodyHash = "2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=", dkimHeaderCanon = DKIM_SIMPLE, dkimBodyCanon = DKIM_SIMPLE, dkimDomain0 = "example.com", dkimFields = ["Received","From","To","Subject","Date","Message-ID"], dkimLength = Nothing, dkimSelector0 = "brisbane"}
 
 ----------------------------------------------------------------
