@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Network.DomainAuth.DKIM.Verify (
     verifyDKIM, prepareDKIM
   , deleteAfterB -- just for test
@@ -6,26 +7,29 @@ module Network.DomainAuth.DKIM.Verify (
 
 import Codec.Crypto.RSA
 import qualified Data.ByteString.Lazy.Char8 as L
+import Data.Char
 import Data.Int
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
 import Network.DomainAuth.Utils
-import Data.Digest.Pure.SHA
+
+import Debug.Trace
 
 ----------------------------------------------------------------
 
 prepareDKIM :: DKIM -> Mail -> L.ByteString
-prepareDKIM dkim mail = bytestringDigest $ sha256 body'
+prepareDKIM dkim mail = cmail
   where
---    dkimVal = fromMaybe "" $ lookupField dkimFieldKey mail
---    dkimSig = dkimFieldKey +++ ":" +++ canonDkimFieldValue DKIM_RELAXED (deleteAfterB dkimVal)
-    {- xxx
-    fold with (+++crlf)
-       skey +++ ":" +++ canonDkimFieldValue
-    +++ dkimSig
-    -}
---    fields  = fieldsForDKIM dkimFieldKey (dkimFields dkim) (mailHeader mail)
-    body'   = canonDkimBody (dkimBodyCanon dkim) (mailBody mail)
+    dkimVal = maybe "" (foldr func "") $ lookupField dkimFieldKey (mailHeader mail)
+    -- xxx ": " for SIMPLE
+    dkimSig = dkimFieldKey +++ ":" +++ canon (deleteAfterB dkimVal)
+    hCanon = dkimHeaderCanon dkim
+    header' = (foldr func "" $ map (canonDkimFieldValue hCanon) fields)
+          +++ dkimSig
+    fields  = fieldsForDKIM dkimFieldKey (dkimFields dkim) (mailHeader mail)
+--    body'   = canonDkimBody (dkimBodyCanon dkim) (mailBody mail) -- to be in verified
+    func x y = x +++ crlf +++ y
+    cmail = header'
 
 ----------------------------------------------------------------
 
@@ -35,9 +39,10 @@ prepareDKIM dkim mail = bytestringDigest $ sha256 body'
 -}
 
 deleteAfterB :: L.ByteString -> L.ByteString
-deleteAfterB bs = fst $ L.splitAt pos bs
+deleteAfterB bs = fst $ L.splitAt pos' bs
   where
     pos = findB bs 0
+    pos' = trackLFSP bs pos
 
 findB :: L.ByteString -> Int64 -> Int64
 findB "" pos = pos
@@ -50,16 +55,27 @@ findB bs pos
     c' = L.head bs'
     len = L.length bs
 
+trackLFSP :: L.ByteString -> Int64 -> Int64
+trackLFSP "" pos = pos
+trackLFSP bs pos
+  | isSpace c = trackLFSP bs (pos - 1)
+  | otherwise = pos
+  where
+    c = bs `L.index` (pos - 1)
+
 ----------------------------------------------------------------
 
--- xxx read RPF again!
-    {-
-canonDkimFieldValue :: DkimCanonAlgo -> FieldValue -> FieldValue
-canonDkimFieldValue DKIM_SIMPLE  _ = "" -- does not support
-canonDkimFieldValue DKIM_RELAXED bs = canon bs
+canonDkimFieldValue :: DkimCanonAlgo -> Field -> L.ByteString
+canonDkimFieldValue DKIM_SIMPLE fld = fieldKey fld +++ ": " +++ value fld
   where
-    canon = removeTrailingWSP . reduceWSP . L.dropWhile isSpace
--}
+    value = foldr func "" . fieldValue
+    func x y = x +++ crlf +++ y
+canonDkimFieldValue DKIM_RELAXED fld = fieldSearchKey fld +++ ":" +++ value fld
+  where
+    value = canon . L.concat . fieldValue
+
+canon :: L.ByteString -> L.ByteString
+canon = L.dropWhile isSpace . removeTrailingWSP . reduceWSP
 
 ----------------------------------------------------------------
 
@@ -75,5 +91,4 @@ canonDkimBodyCore remFWS remTEL = fromBodyWith remFWS . remTEL
 ----------------------------------------------------------------
 
 verifyDKIM :: PublicKey -> L.ByteString -> L.ByteString -> Bool
---verifyDKIM pub sig mail = rsassa_pkcs1_v1_5_verify ha_SHA256 pub mail sig --- xxx chose SHA
-verifyDKIM _ sig mail = sig == mail
+verifyDKIM pub sig mail = rsassa_pkcs1_v1_5_verify ha_SHA256 pub (trace (L.unpack mail) mail) sig --- xxx chose SHA

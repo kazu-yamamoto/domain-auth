@@ -26,7 +26,6 @@ runDKIM' resolver mail dkim = maybe DATempError (verify sig cmail) <$> pub
   where
     pub = lookupPublicKey resolver dom
     dom = dkimSelector dkim ++ "._domainkey." ++ dkimDomain dkim
---    sig = B.decode (dkimSignature dkim)
-    sig = B.decode (dkimBodyHash dkim)
+    sig = B.decode (dkimSignature dkim)
     cmail = prepareDKIM dkim mail
     verify s c p = if verifyDKIM p s c then DAPass else DAFail

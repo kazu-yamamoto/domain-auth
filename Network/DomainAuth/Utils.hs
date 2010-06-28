@@ -8,7 +8,6 @@ import Data.Int
 
 crlf :: L.ByteString
 crlf = "\r\n"
---crlf = "CRLF\n"
 
 (+++) :: L.ByteString -> L.ByteString -> L.ByteString
 (+++) = L.append

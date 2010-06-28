@@ -182,22 +182,19 @@ fieldsAfter key hdr = safeTail flds
   RFC 4871 is ambiguous, so implement only normal case.
 -}
 
-{-
-fieldsForDKIM :: FieldKey -> [CanonFieldKey] -> Header -> [(CanonFieldKey,FieldValue)]
-fieldsForDKIM key flds (Header hdr) = map skeyAndValue $ find flds after
+fieldsForDKIM :: FieldKey -> [CanonFieldKey] -> Header -> Header
+fieldsForDKIM key flds hdr = ffind flds after
   where
-    after = fieldsAfter' key hdr
-    skeyAndValue (skey,ifld) = (skey,fieldValue ifld)
+    after = fieldsAfter key hdr
 
-find :: [CanonFieldKey] -> IHeader -> IHeader
-find [] _ = []
-find _ [] = []
-find (k:ks) is
+ffind :: [CanonFieldKey] -> Header -> Header
+ffind [] _ = []
+ffind _ [] = []
+ffind (k:ks) is
   | is' == [] = []
-  | otherwise = head is' : find ks (tail is')
+  | otherwise = head is' : ffind ks (tail is')
   where
-    is' = dropWhile (\(sk,_) -> sk /= k) is
--}
+    is' = dropWhile (\fld -> fieldSearchKey fld /= k) is
 
 ----------------------------------------------------------------
 

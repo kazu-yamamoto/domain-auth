@@ -7,6 +7,7 @@ import Network.DNS as DNS hiding (answer)
 import Network.DomainAuth
 import Network.DomainAuth.DK.Types
 import Network.DomainAuth.DKIM.Types
+import Network.DomainAuth.DKIM.Verify
 import Network.DomainAuth.PRD.Lexer
 import Network.DomainAuth.Pubkey.RSAPub
 import Network.DomainAuth.Utils
@@ -78,11 +79,9 @@ tests = [
        , testCase "dk yahoo" test_mail2
        , testCase "dk yahoo" test_mail3
        ]
-{-
   , testGroup "DKIM canon" [
          testCase "dkim deleteB" test_dkim_btag
        ]
--}
   , testGroup "Utils" [
          testCase "blines" test_blines
        , testCase "blines2" test_blines2
@@ -412,13 +411,11 @@ test_mail3 = getMail inp @?= out
 
 ----------------------------------------------------------------
 
-{-
 test_dkim_btag :: Assertion
 test_dkim_btag = deleteAfterB inp @?= out
   where
     inp = "DKIM-Signature: a=rsa-sha256; d=example.net; s=brisbane;\n   c=simple; q=dns/txt; i=@eng.example.net;\n   t=1117574938; x=1118006938;\n   h=from:to:subject:date;\n   z=From:foo@eng.example.net|To:joe@example.com|\n     Subject:demo=20run|Date:July=205,=202005=203:44:08=20PM=20-0700;\n   bh=MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=;\n   b=dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZ\n            VoG4ZHRNiYzR\n"
-    out = "DKIM-Signature: a=rsa-sha256; d=example.net; s=brisbane;\n   c=simple; q=dns/txt; i=@eng.example.net;\n   t=1117574938; x=1118006938;\n   h=from:to:subject:date;\n   z=From:foo@eng.example.net|To:joe@example.com|\n     Subject:demo=20run|Date:July=205,=202005=203:44:08=20PM=20-0700;\n   bh=MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=;\n   "
--}
+    out = "DKIM-Signature: a=rsa-sha256; d=example.net; s=brisbane;\n   c=simple; q=dns/txt; i=@eng.example.net;\n   t=1117574938; x=1118006938;\n   h=from:to:subject:date;\n   z=From:foo@eng.example.net|To:joe@example.com|\n     Subject:demo=20run|Date:July=205,=202005=203:44:08=20PM=20-0700;\n   bh=MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=;"
 
 ----------------------------------------------------------------
 
