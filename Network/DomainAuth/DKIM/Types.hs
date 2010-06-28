@@ -1,7 +1,15 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Network.DomainAuth.DKIM.Types where
 
 import qualified Data.ByteString.Lazy.Char8 as L
 import Network.DNS
+import Network.DomainAuth.Mail
+
+----------------------------------------------------------------
+
+dkimFieldKey :: CanonFieldKey
+dkimFieldKey = "dkim-signature"
 
 ----------------------------------------------------------------
 
@@ -16,7 +24,7 @@ data DKIM = DKIM {
   , dkimHeaderCanon :: DkimCanonAlgo
   , dkimBodyCanon   :: DkimCanonAlgo
   , dkimDomain0     :: L.ByteString
-  , dkimFields      :: [L.ByteString]
+  , dkimFields      :: [CanonFieldKey]
   , dkimLength      :: Maybe Int
   , dkimSelector0   :: L.ByteString
   } deriving (Eq,Show)

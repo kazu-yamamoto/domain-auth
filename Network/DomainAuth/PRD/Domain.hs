@@ -9,7 +9,7 @@ import Text.Appar.LazyByteString
   Extract a domain from a value of a header field.
 -}
 
-extractDomain :: FieldValue -> Maybe Domain
+extractDomain :: RawFieldValue -> Maybe Domain
 extractDomain bs = parse structured bs >>= takeDomain
     where
       takeDomain = dropTail . dropWhile (/="@")

@@ -20,7 +20,7 @@ import Network.DomainAuth.PRD.Domain
 
 ----------------------------------------------------------------
 
-type HD = [(CanonFieldKey,FieldValue)]
+type HD = [(CanonFieldKey,RawFieldValue)]
 
 data DST = DST_Zero | DST_Invalid | DST_Valid Domain deriving (Eq, Show)
 
@@ -53,7 +53,7 @@ initialPRD = PRD {
 {-|
   Pushing a field key and its value in to the PRD context.
 -}
-pushPRD :: FieldKey -> FieldValue -> PRD -> PRD
+pushPRD :: RawFieldKey -> RawFieldValue -> PRD -> PRD
 pushPRD key val ctx = case ckey of
     "from"          -> pushFrom ctx' jdom
     "sender"        -> pushSender ctx' jdom

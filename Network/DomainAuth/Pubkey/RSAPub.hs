@@ -17,8 +17,9 @@ lookupPublicKey resolver domain = decode <$> lookupPublicKey' resolver domain
 
 lookupPublicKey' :: DNS.Resolver -> String -> IO (Maybe L.ByteString)
 lookupPublicKey' resolver domain = extractPub <$> DNS.lookupTXT resolver domain
-  where
-    extractPub = (>>= lookup (LC.pack "p") . parseTaggedValue . head)
+
+extractPub :: Maybe [L.ByteString] -> Maybe L.ByteString
+extractPub = (>>= lookup (LC.pack "p") . parseTaggedValue . head)
 
 decodeRSAPublicyKey :: L.ByteString -> PublicKey
 decodeRSAPublicyKey bs = PublicKey size n e

@@ -9,6 +9,7 @@ import Network.DomainAuth.DK.Types
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.PRD.Lexer
 import Network.DomainAuth.Pubkey.RSAPub
+import Network.DomainAuth.Utils
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
@@ -68,10 +69,23 @@ tests = [
          testCase "dk yahoo" test_dk_yahoo
        , testCase "dk gmail" test_dk_gmail
        ]
+  , testGroup "DKIM" [
+         testCase "dkim iij" test_dkim_iij
+       , testCase "dkim gmail" test_dkim_gmail
+       ]
   , testGroup "Mail" [
          testCase "dk yahoo" test_mail
        , testCase "dk yahoo" test_mail2
        , testCase "dk yahoo" test_mail3
+       ]
+{-
+  , testGroup "DKIM canon" [
+         testCase "dkim deleteB" test_dkim_btag
+       ]
+-}
+  , testGroup "Utils" [
+         testCase "blines" test_blines
+       , testCase "blines2" test_blines2
        ]
   ]
 
@@ -159,7 +173,7 @@ test_domain4 = extractDomain "Alice Brown <example.com>" @?= Nothing
 
 ----------------------------------------------------------------
 
-maddr1,maddr2,maddr3,maddr4 :: FieldValue
+maddr1,maddr2,maddr3,maddr4 :: RawFieldValue
 maddr1 = "alice@alice.example.jp"
 maddr2 = "bob@bob.example.jp"
 maddr3 = "chris@chris.example.jp"
@@ -320,13 +334,13 @@ test_dkim_field :: Assertion
 test_dkim_field = parseDKIM inp @?= out
   where
    inp = "v=1; a=rsa-sha256; s=brisbane; d=example.com;\n         c=relaxed/simple; q=dns/txt; i=joe@football.example.com;\n         h=Received : From : To : Subject : Date : Message-ID;\n         bh=2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=;\n         b=AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB\n           4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHut\n           KVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV\n           4bmp/YzhwvcubU4=;"
-   out = Just DKIM {dkimVersion = "1", dkimSigAlgo = RSA_SHA256, dkimSignature = "AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHutKVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV4bmp/YzhwvcubU4=", dkimBodyHash = "2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=", dkimHeaderCanon = DKIM_RELAXED, dkimBodyCanon = DKIM_SIMPLE, dkimDomain0 = "example.com", dkimFields = ["Received","From","To","Subject","Date","Message-ID"], dkimLength = Nothing, dkimSelector0 = "brisbane"}
+   out = Just DKIM {dkimVersion = "1", dkimSigAlgo = RSA_SHA256, dkimSignature = "AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHutKVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV4bmp/YzhwvcubU4=", dkimBodyHash = "2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=", dkimHeaderCanon = DKIM_RELAXED, dkimBodyCanon = DKIM_SIMPLE, dkimDomain0 = "example.com", dkimFields = ["received","from","to","subject","date","message-id"], dkimLength = Nothing, dkimSelector0 = "brisbane"}
 
 test_dkim_field2 :: Assertion
 test_dkim_field2 = parseDKIM inp @?= out
   where
    inp = "v=1; a=rsa-sha256; s=brisbane; d=example.com;\n         q=dns/txt; i=joe@football.example.com;\n         h=Received : From : To : Subject : Date : Message-ID;\n         bh=2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=;\n         b=AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB\n           4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHut\n           KVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV\n           4bmp/YzhwvcubU4=;"
-   out = Just DKIM {dkimVersion = "1", dkimSigAlgo = RSA_SHA256, dkimSignature = "AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHutKVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV4bmp/YzhwvcubU4=", dkimBodyHash = "2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=", dkimHeaderCanon = DKIM_SIMPLE, dkimBodyCanon = DKIM_SIMPLE, dkimDomain0 = "example.com", dkimFields = ["Received","From","To","Subject","Date","Message-ID"], dkimLength = Nothing, dkimSelector0 = "brisbane"}
+   out = Just DKIM {dkimVersion = "1", dkimSigAlgo = RSA_SHA256, dkimSignature = "AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHutKVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV4bmp/YzhwvcubU4=", dkimBodyHash = "2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=", dkimHeaderCanon = DKIM_SIMPLE, dkimBodyCanon = DKIM_SIMPLE, dkimDomain0 = "example.com", dkimFields = ["received","from","to","subject","date","message-id"], dkimLength = Nothing, dkimSelector0 = "brisbane"}
 
 ----------------------------------------------------------------
 
@@ -345,6 +359,25 @@ test_dk_gmail = do
     DNS.withResolver rs $ \resolver -> do
         res <- runDK resolver mail
         res @?= DAPass
+
+----------------------------------------------------------------
+
+test_dkim_iij :: Assertion
+test_dkim_iij = do
+    mail <- readMail "data/iij"
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    DNS.withResolver rs $ \resolver -> do
+        res <- runDKIM resolver mail
+        res @?= DAPass
+
+test_dkim_gmail :: Assertion
+test_dkim_gmail = do
+    mail <- readMail "data/gmail"
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    DNS.withResolver rs $ \resolver -> do
+        res <- runDKIM resolver mail
+        res @?= DAPass
+
 ----------------------------------------------------------------
 
 test_mail :: Assertion
@@ -355,7 +388,7 @@ test_mail = getMail inp @?= out
         $ pushBody "body"
         $ pushField "to" "val"
         $ pushField "from" "val"
-        initialMail
+        initialXMail
 
 test_mail2 :: Assertion
 test_mail2 = getMail inp @?= out
@@ -365,7 +398,7 @@ test_mail2 = getMail inp @?= out
         $ pushBody "body"
         $ pushField "to" "val"
         $ pushField "from" "val\tval"
-        initialMail
+        initialXMail
 
 test_mail3 :: Assertion
 test_mail3 = getMail inp @?= out
@@ -375,7 +408,31 @@ test_mail3 = getMail inp @?= out
         $ pushBody ""
         $ pushField "to" "val"
         $ pushField "from" "val"
-        initialMail
+        initialXMail
+
+----------------------------------------------------------------
+
+{-
+test_dkim_btag :: Assertion
+test_dkim_btag = deleteAfterB inp @?= out
+  where
+    inp = "DKIM-Signature: a=rsa-sha256; d=example.net; s=brisbane;\n   c=simple; q=dns/txt; i=@eng.example.net;\n   t=1117574938; x=1118006938;\n   h=from:to:subject:date;\n   z=From:foo@eng.example.net|To:joe@example.com|\n     Subject:demo=20run|Date:July=205,=202005=203:44:08=20PM=20-0700;\n   bh=MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=;\n   b=dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZ\n            VoG4ZHRNiYzR\n"
+    out = "DKIM-Signature: a=rsa-sha256; d=example.net; s=brisbane;\n   c=simple; q=dns/txt; i=@eng.example.net;\n   t=1117574938; x=1118006938;\n   h=from:to:subject:date;\n   z=From:foo@eng.example.net|To:joe@example.com|\n     Subject:demo=20run|Date:July=205,=202005=203:44:08=20PM=20-0700;\n   bh=MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=;\n   "
+-}
+
+----------------------------------------------------------------
+
+test_blines :: Assertion
+test_blines = blines inp @?= out
+  where
+    inp = "foo\r\n\r\nbar\r\nbaz"
+    out = ["foo","","bar","baz"]
+
+test_blines2 :: Assertion
+test_blines2 = blines inp @?= out
+  where
+    inp = "foo\r\n"
+    out = ["foo"]
 
 ----------------------------------------------------------------
 

@@ -17,8 +17,8 @@ import Network.DomainAuth.Types
 runDK :: Resolver -> Mail -> IO DAResult
 runDK resolver mail = dk1
   where
-    dk1     = maybe (return DANone)      dk2 $ lookupField dkFieldKey mail
-    dk2 rdk = maybe (return DAPermError) dk3 $ parseDK rdk
+    dk1     = maybe (return DANone)      dk2 $ lookupField dkFieldKey (mailHeader mail)
+    dk2 dkv = maybe (return DAPermError) dk3 $ parseDK (toRaw dkv)
     dk3     = runDK' resolver mail
 
 runDK' :: Resolver -> Mail -> DK -> IO DAResult

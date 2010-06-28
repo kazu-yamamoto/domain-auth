@@ -11,7 +11,7 @@ import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
 import Prelude hiding (catch)
 
-parseDKIM :: FieldValue -> Maybe DKIM
+parseDKIM :: RawFieldValue -> Maybe DKIM
 parseDKIM val = toDKIM domkey
   where
     (ts,vs) = unzip $ parseTaggedValue val
@@ -50,7 +50,7 @@ data MDKIM = MDKIM {
   , mdkimHeaderCanon :: Maybe DkimCanonAlgo
   , mdkimBodyCanon   :: Maybe DkimCanonAlgo
   , mdkimDomain      :: Maybe L.ByteString
-  , mdkimFields      :: Maybe [L.ByteString]
+  , mdkimFields      :: Maybe [CanonFieldKey]
   , mdkimLength      :: Maybe Int
   , mdkimSelector    :: Maybe L.ByteString
   } deriving (Eq,Show)
@@ -125,7 +125,9 @@ setDkimDomain :: DKIMSetter
 setDkimDomain dom dkim = dkim { mdkimDomain = Just dom }
 
 setDkimFields :: DKIMSetter
-setDkimFields keys dkim = dkim { mdkimFields = Just (L.split ':' keys) }
+setDkimFields keys dkim = dkim { mdkimFields = Just flds }
+  where
+    flds = map canonicalizeKey $ L.split ':' keys
 
 setDkimLength :: DKIMSetter
 setDkimLength len dkim = dkim { mdkimLength = fst <$> L.readInt len }

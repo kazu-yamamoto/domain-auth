@@ -1,8 +1,16 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Network.DomainAuth.DK.Types where
 
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import Network.DNS
+import Network.DomainAuth.Mail
+
+----------------------------------------------------------------
+
+dkFieldKey :: CanonFieldKey
+dkFieldKey = "domainkey-signature"
 
 ----------------------------------------------------------------
 

@@ -1,12 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Network.DomainAuth.DK.Verify (
-    verifyDK, prepareDK, dkFieldKey
+    verifyDK, prepareDK
   ) where
 
 import Codec.Crypto.RSA
 import qualified Data.ByteString.Lazy.Char8 as L
-import Data.Char
 import qualified Data.Map as M
 import Network.DomainAuth.DK.Types
 import Network.DomainAuth.Mail
@@ -14,16 +13,13 @@ import Network.DomainAuth.Utils
 
 ----------------------------------------------------------------
 
-dkFieldKey :: CanonFieldKey
-dkFieldKey = "domainkey-signature"
-
-----------------------------------------------------------------
-
+-- xxx when body' is empty dont' add crlf
 prepareDK :: DK -> Mail -> L.ByteString
-prepareDK dk mail = header' +++ crlf +++ body'
+prepareDK dk mail = cmail
   where
     header' = canonDkHeader dk (mailHeader mail)
     body'   = canonDkBody (dkCanonAlgo dk) (mailBody mail)
+    cmail   = if body' == "" then header' else header' +++ crlf +++ body'
 
 ----------------------------------------------------------------
 
@@ -34,55 +30,30 @@ canonDkHeader dk hdr = canonDkHeader' calgo flds
     hFields = dkFields dk
     flds = prepareDkHeader hFields hdr
 
-prepareDkHeader :: Maybe DkFields -> Header -> [Field]
-prepareDkHeader Nothing hdr = fieldsAfter dkFieldKey hdr
-prepareDkHeader (Just hFields) hdr = fieldsAfterWith dkFieldKey isInHTag hdr
+canonDkHeader' :: DkCanonAlgo -> Header -> L.ByteString
+canonDkHeader' DK_NOFWS  = canonDkHeaderCore fromField
   where
-    isInHTag k = M.member k hFields
-
-canonDkHeader' :: DkCanonAlgo -> [Field] -> L.ByteString
-canonDkHeader' DK_NOFWS  = canonDkHeaderCore removeFWS
-canonDkHeader' DK_SIMPLE = canonDkHeaderCore removeLF
+    fromField fld = L.concat $ fieldKey fld : ":" : map removeFWS (fieldValue fld)
+canonDkHeader' DK_SIMPLE = canonDkHeaderCore fromField
   where
-    removeLF = L.init
+    fromField fld = L.concat $ fieldKey fld : ": " : fieldValue fld
 
-canonDkHeaderCore :: FWSRemover -> [Field] -> L.ByteString
-canonDkHeaderCore remover = foldr (op . remover) ""
+canonDkHeaderCore :: (Field -> L.ByteString) -> Header -> L.ByteString
+canonDkHeaderCore fromField = foldr (op . fromField) ""
   where
     a `op` b = a +++ crlf +++ b
+
+prepareDkHeader :: Maybe DkFields -> Header -> Header
+prepareDkHeader Nothing hdr = fieldsAfter dkFieldKey hdr
+prepareDkHeader (Just hFields) hdr = filter isInHTag $ fieldsAfter dkFieldKey hdr
+  where
+    isInHTag fld = M.member (fieldSearchKey fld) hFields
 
 ----------------------------------------------------------------
 
 canonDkBody :: DkCanonAlgo -> Body -> L.ByteString
-canonDkBody DK_SIMPLE bs
-  | slowPath bs = canonDkBodyCore id removeTrailingEmptyLine bs
-  | otherwise   = canonDkBodyCore id id bs
-canonDkBody DK_NOFWS bs
-  | slowPath bs = canonDkBodyCore removeFWS removeTrailingEmptyLine bs
-  | otherwise   = canonDkBodyCore removeFWS id bs
-
-canonDkBodyCore :: FWSRemover -> TRLRemover -> Body -> L.ByteString
-canonDkBodyCore remFWS remTEL = foldr op "" . remTEL . L.lines
-  where
-    a `op` b = remFWS a +++ crlf +++ b
-
-----------------------------------------------------------------
-
-type FWSRemover = L.ByteString -> L.ByteString
-
-removeFWS :: FWSRemover
-removeFWS = L.filter (not.isSpace)
-
-type TRLRemover = [L.ByteString] -> [L.ByteString]
-
-removeTrailingEmptyLine :: TRLRemover
-removeTrailingEmptyLine = reverse . dropWhile (=="") . reverse
-
-slowPath :: L.ByteString -> Bool
-slowPath bs = bs !!! (len - 1) == '\n'
-           && bs !!! (len - 2) == '\n'
-  where
-    len = L.length bs
+canonDkBody DK_SIMPLE bd = fromBody . removeTrailingEmptyLine $ bd
+canonDkBody DK_NOFWS  bd = fromBodyWith removeFWS . removeTrailingEmptyLine $ bd
 
 ----------------------------------------------------------------
 

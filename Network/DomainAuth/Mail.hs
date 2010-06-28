@@ -1,68 +1,42 @@
-{-# LANGUAGE CPP, OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Network.DomainAuth.Mail (
-    XMail, Mail(..), Header
-  , Field, FieldKey, FieldValue, CanonFieldKey
-  , Body, BodyChunk, RawMail
-  , getMail
-  , readMail
-  , initialMail
-  , pushField
-  , pushBody
-  , finalizeMail
-  , lookupField
-  , fieldsAfter
-  , fieldsAfterWith
-  , canonicalizeKey
-  , parseTaggedValue
-  ) where
+module Network.DomainAuth.Mail where
 
-import Control.Applicative
+import Control.Applicative hiding (empty)
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Char
 import Data.Int
-import System.IO
+import Data.List
+import Data.Foldable as F (foldr)
+import Data.Sequence (Seq, fromList, viewr, ViewR(..), empty)
 import Network.DomainAuth.Utils
 
 ----------------------------------------------------------------
-
-type Field = L.ByteString
-type FieldKey = L.ByteString
-type FieldValue = L.ByteString
-type CanonFieldKey = L.ByteString
-type Body = L.ByteString
-type BodyChunk = L.ByteString
-
-type SearchKey = L.ByteString
-data IField  = IField {
-    fieldKey :: FieldKey
-  , fieldValue :: FieldValue
-  } deriving (Eq,Show)
-
-composeField :: IField -> L.ByteString
-composeField fld = fieldKey fld +++ ": " +++ fieldValue fld
-
-----------------------------------------------------------------
-
-data XMail = XMail {
-    xmailHeader :: Header
-  , xmailBody :: [BodyChunk]
-  } deriving (Eq,Show)
 
 data Mail = Mail {
     mailHeader :: Header
   , mailBody :: Body
   } deriving (Eq,Show)
 
-initialMail :: XMail
-initialMail = XMail (Header []) []
+type Header = [Field]
 
-type IHeader = [(SearchKey,IField)]
+data Field  = Field {
+    fieldSearchKey :: CanonFieldKey
+  , fieldKey       :: FieldKey
+  , fieldValue     :: FieldValue
+  } deriving (Eq,Show)
 
-data Header = Header IHeader deriving (Eq,Show)
+type CanonFieldKey = L.ByteString
+type FieldKey = L.ByteString
+type FieldValue = [L.ByteString]
 
-fromHeader :: Header -> IHeader
-fromHeader (Header kvs) = kvs
+toRaw :: FieldValue -> RawFieldValue
+toRaw = L.concat
+
+type Body = Seq L.ByteString
+
+composeField :: Field -> L.ByteString
+composeField fld = L.concat $ fieldKey fld : ": " : fieldValue fld
 
 ----------------------------------------------------------------
 
@@ -71,31 +45,45 @@ canonicalizeKey = L.map toLower
 
 ----------------------------------------------------------------
 
-pushField :: FieldKey -> FieldValue -> XMail -> XMail
+data XMail = XMail {
+    xmailHeader :: Header
+  , xmailBody :: [RawBodyChunk]
+  } deriving (Eq,Show)
+
+type RawBodyChunk = L.ByteString
+
+initialXMail :: XMail
+initialXMail = XMail [] []
+
+pushField :: RawFieldKey -> RawFieldValue -> XMail -> XMail
 pushField key val xmail = xmail {
-    xmailHeader = push (skey,field) (xmailHeader xmail)
+    xmailHeader = fld : xmailHeader xmail
   }
   where
-    push kv (Header kvs) = Header (kv:kvs)
-    skey = canonicalizeKey key
-    field = IField key val
+    fld = Field ckey key (blines val)
+    ckey = canonicalizeKey key
 
-pushBody :: BodyChunk -> XMail -> XMail
+pushBody :: RawBodyChunk -> XMail -> XMail
 pushBody bc xmail = xmail {
     xmailBody = bc : xmailBody xmail
   }
 
 finalizeMail :: XMail -> Mail
 finalizeMail xmail = Mail {
-    mailHeader = Header . reverse . fromHeader . xmailHeader $ xmail
-  , mailBody = foldl (flip (+++)) "" $ xmailBody xmail
+    mailHeader = reverse . xmailHeader $ xmail
+  , mailBody = fromList . blines . L.concat . reverse . xmailBody $ xmail
   }
 
-lookupField :: FieldKey -> Mail -> Maybe FieldValue
-lookupField key mail = fieldValue <$> lookup skey hdr
+lookupField :: FieldKey -> Header -> Maybe FieldValue
+lookupField key hdr = fieldValue <$> find (ckey `isKeyOf`) hdr
   where
-    skey = canonicalizeKey key
-    hdr = fromHeader (mailHeader mail)
+    ckey = canonicalizeKey key
+
+isKeyOf :: CanonFieldKey -> Field -> Bool
+isKeyOf key fld = fieldSearchKey fld == key
+
+isNotKeyOf :: CanonFieldKey -> Field -> Bool
+isNotKeyOf key fld = fieldSearchKey fld /= key
 
 ----------------------------------------------------------------
 
@@ -103,23 +91,18 @@ type RawMail = L.ByteString
 type RawHeader = L.ByteString
 type RawBody = L.ByteString
 type RawField = L.ByteString
+type RawFieldKey = L.ByteString
+type RawFieldValue = L.ByteString
 
 readMail :: FilePath -> IO Mail
-readMail file = getMail <$> readFile8 file
-  where
-    readFile8 fl = do
-        h <- openFile fl ReadMode
-#if __GLASGOW_HASKELL__ >= 611
-        hSetEncoding h latin1
-#endif
-        L.hGetContents h
+readMail file = getMail <$> L.readFile file
 
 getMail :: RawMail -> Mail
 getMail bs = finalizeMail $ pushBody rbdy xmail
   where
     (rhdr,rbdy) = splitHeaderBody bs
     rflds = splitFields rhdr
-    xmail = foldl push initialMail rflds
+    xmail = foldl push initialXMail rflds
     push m fld = let (k,v) = parseField fld
                  in pushField k v m
 
@@ -158,36 +141,67 @@ splitHeaderBody bs = case mcnt of
     Just cnt -> check (L.splitAt cnt bs)
   where
     mcnt = findEOH bs 0
-    check (hdr,bdy) = if bdy == ""
-                      then (hdr, bdy)
-                      else (hdr, L.tail bdy) -- xxx need to check Sendmail
+    check (hdr,bdy) = (hdr, dropSep bdy)
+    dropSep bdy
+      | len == 0 = ""
+      | len == 1 = ""
+      | otherwise = if b1 == '\r' then bdy3 else bdy2
+      where
+        len = L.length bdy
+        b1 = L.head bdy
+        bdy2 = L.tail bdy
+        bdy3 = L.tail bdy2
 
 findEOH :: RawMail -> Int64 -> Maybe Int64
 findEOH "" _ = Nothing
 findEOH bs cnt
-  | b == '\n' && bs' /= "" && L.head bs' == '\n' = Just (cnt + 1)
-  | otherwise                                    = findEOH bs' (cnt + 1)
+  | b0 == '\n' && bs1 /= "" && b1 == '\n' = Just (cnt + 1)
+  | b0 == '\n' && bs1 /= "" && b1 == '\r'
+               && bs2 /= "" && b2 == '\n' = Just (cnt + 1)
+  | otherwise                             = findEOH bs1 (cnt + 1)
   where
-    b   = L.head bs
-    bs' = L.tail bs
-
-fieldsAfter :: FieldKey -> Header -> [Field]
-fieldsAfter key hdr = map (composeField . snd) . fieldsAfter' (canonicalizeKey key) $ fromHeader hdr
-
-fieldsAfterWith :: FieldKey -> (CanonFieldKey -> Bool) -> Header -> [Field]
-fieldsAfterWith key func hdr = map (composeField . snd) . filter predicate . fieldsAfter' (canonicalizeKey key) $ fromHeader hdr
-  where
-    predicate (k,_) = func k
-
-fieldsAfter' :: FieldKey -> IHeader -> IHeader
-fieldsAfter' _ [] = []
-fieldsAfter' key ((k,_):kfs)
-  | key == k  = kfs
-  | otherwise = fieldsAfter' key kfs
+    b0  = L.head bs
+    bs1 = L.tail bs
+    b1  = L.head bs1
+    bs2 = L.tail bs1
+    b2  = L.head bs2
 
 ----------------------------------------------------------------
 
-parseField :: Field -> (FieldKey,FieldValue)
+fieldsAfter :: FieldKey -> Header -> Header
+fieldsAfter key hdr = safeTail flds
+  where
+    flds = dropWhile (ckey `isNotKeyOf`) hdr
+    ckey = canonicalizeKey key
+    safeTail [] = []
+    safeTail xs = tail xs
+
+----------------------------------------------------------------
+
+{-
+  RFC 4871 is ambiguous, so implement only normal case.
+-}
+
+{-
+fieldsForDKIM :: FieldKey -> [CanonFieldKey] -> Header -> [(CanonFieldKey,FieldValue)]
+fieldsForDKIM key flds (Header hdr) = map skeyAndValue $ find flds after
+  where
+    after = fieldsAfter' key hdr
+    skeyAndValue (skey,ifld) = (skey,fieldValue ifld)
+
+find :: [CanonFieldKey] -> IHeader -> IHeader
+find [] _ = []
+find _ [] = []
+find (k:ks) is
+  | is' == [] = []
+  | otherwise = head is' : find ks (tail is')
+  where
+    is' = dropWhile (\(sk,_) -> sk /= k) is
+-}
+
+----------------------------------------------------------------
+
+parseField :: RawField -> (RawFieldKey,RawFieldValue)
 parseField bs = (k,v')
   where
     (k,v) = break' ':' bs
@@ -196,9 +210,8 @@ parseField bs = (k,v')
          then L.tail v
          else v
 
-
 -- This breaks spaces in the note tag.
-parseTaggedValue :: FieldValue -> [(L.ByteString,L.ByteString)]
+parseTaggedValue :: RawFieldValue -> [(L.ByteString,L.ByteString)]
 parseTaggedValue xs = vss
   where
     v = L.filter (not.isSpace) xs
@@ -213,3 +226,23 @@ break' c bs = (f,s)
         then ""
         else L.tail s'
 
+----------------------------------------------------------------
+
+removeTrailingEmptyLine :: Body -> Body
+removeTrailingEmptyLine = dropWhileR (=="")
+
+-- dropWhileR is buggy, sigh.
+dropWhileR :: (a -> Bool) -> Seq a -> Seq a
+dropWhileR p xs = case viewr xs of
+    EmptyR        -> empty
+    xs' :> x
+      | p x       -> dropWhileR p xs'
+      | otherwise -> xs
+
+fromBody :: Body -> L.ByteString
+fromBody = fromBodyWith id
+
+fromBodyWith :: (L.ByteString -> L.ByteString) -> Body -> L.ByteString
+fromBodyWith modify = F.foldr func ""
+  where
+    func x y = modify x +++ crlf +++ y

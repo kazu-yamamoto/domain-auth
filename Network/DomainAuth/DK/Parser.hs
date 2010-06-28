@@ -11,7 +11,7 @@ import Network.DomainAuth.DK.Types
 import Network.DomainAuth.Mail
 import Prelude hiding (catch)
 
-parseDK :: FieldValue -> Maybe DK
+parseDK :: RawFieldValue -> Maybe DK
 parseDK val = toDK domkey
   where
     (ts,vs) = unzip $ parseTaggedValue val

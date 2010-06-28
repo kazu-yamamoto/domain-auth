@@ -1,92 +1,79 @@
 {-# LANGUAGE OverloadedStrings #-}
-
 module Network.DomainAuth.DKIM.Verify (
-    verifyDKIM, prepareDKIM, dkimFieldKey
+    verifyDKIM, prepareDKIM
+  , deleteAfterB -- just for test
   ) where
 
 import Codec.Crypto.RSA
 import qualified Data.ByteString.Lazy.Char8 as L
-import Data.Char
+import Data.Int
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
 import Network.DomainAuth.Utils
-
-----------------------------------------------------------------
-
-dkimFieldKey :: CanonFieldKey
-dkimFieldKey = "dkim-signature"
+import Data.Digest.Pure.SHA
 
 ----------------------------------------------------------------
 
 prepareDKIM :: DKIM -> Mail -> L.ByteString
-prepareDKIM dkim mail = header' +++ crlf +++ body'
+prepareDKIM dkim mail = bytestringDigest $ sha256 body'
   where
-    header' = canonDkimHeader dkim (mailHeader mail)
+--    dkimVal = fromMaybe "" $ lookupField dkimFieldKey mail
+--    dkimSig = dkimFieldKey +++ ":" +++ canonDkimFieldValue DKIM_RELAXED (deleteAfterB dkimVal)
+    {- xxx
+    fold with (+++crlf)
+       skey +++ ":" +++ canonDkimFieldValue
+    +++ dkimSig
+    -}
+--    fields  = fieldsForDKIM dkimFieldKey (dkimFields dkim) (mailHeader mail)
     body'   = canonDkimBody (dkimBodyCanon dkim) (mailBody mail)
 
 ----------------------------------------------------------------
 
-canonDkimHeader :: DKIM -> Header -> L.ByteString
-canonDkimHeader dkim hdr = canonDkimHeader' calgo flds
-  where
-    calgo = dkimHeaderCanon dkim
-    hFields = dkimFields dkim
-    flds = prepareDkimHeader hFields hdr
-
-prepareDkimHeader = undefined
 {-
-prepareDkimHeader :: Maybe [L.ByteString] -> Header -> [Field]
-prepareDkimHeader Nothing hdr = fieldsAfter dkimFieldkimey hdr
-prepareDkimHeader (Just hFields) hdr = fieldsAfterWith dkimFieldkimey isInHTag hdr
-  where
-    isInHTag k = M.member k hFields
+  The spec of RFC4871 is complicated and imperfect.
+  Let's remove chars after "b=" assuming no SP between "b" and "=".
 -}
 
-canonDkimHeader' :: DkimCanonAlgo -> [Field] -> L.ByteString
-canonDkimHeader' DKIM_RELAXED  = canonDkimHeaderCore removeFWS
-canonDkimHeader' DKIM_SIMPLE = canonDkimHeaderCore removeLF
+deleteAfterB :: L.ByteString -> L.ByteString
+deleteAfterB bs = fst $ L.splitAt pos bs
   where
-    removeLF = L.init
+    pos = findB bs 0
 
-canonDkimHeaderCore :: FWSRemover -> [Field] -> L.ByteString
-canonDkimHeaderCore remover = foldr (op . remover) ""
+findB :: L.ByteString -> Int64 -> Int64
+findB "" pos = pos
+findB bs pos
+  | c == 'b' && len >= 2 && c' == '=' = pos
+  | otherwise                         = findB bs' (pos + 1)
   where
-    a `op` b = a +++ crlf +++ b
-
-----------------------------------------------------------------
-
-canonDkimBody :: DkimCanonAlgo -> Body -> L.ByteString
-canonDkimBody DKIM_SIMPLE bs
-  | slowPath bs = canonDkimBodyCore id removeTrailingEmptyLine bs
-  | otherwise   = canonDkimBodyCore id id bs
-canonDkimBody DKIM_RELAXED bs
-  | slowPath bs = canonDkimBodyCore removeFWS removeTrailingEmptyLine bs
-  | otherwise   = canonDkimBodyCore removeFWS id bs
-
-canonDkimBodyCore :: FWSRemover -> TRLRemover -> Body -> L.ByteString
-canonDkimBodyCore remFWS remTEL = foldr op "" . remTEL . L.lines
-  where
-    a `op` b = remFWS a +++ crlf +++ b
-
-----------------------------------------------------------------
-
-type FWSRemover = L.ByteString -> L.ByteString
-
-removeFWS :: FWSRemover
-removeFWS = L.filter (not.isSpace)
-
-type TRLRemover = [L.ByteString] -> [L.ByteString]
-
-removeTrailingEmptyLine :: TRLRemover
-removeTrailingEmptyLine = reverse . dropWhile (=="") . reverse
-
-slowPath :: L.ByteString -> Bool
-slowPath bs = bs !!! (len - 1) == '\n'
-           && bs !!! (len - 2) == '\n'
-  where
+    c = L.head bs
+    bs' = L.tail bs
+    c' = L.head bs'
     len = L.length bs
 
 ----------------------------------------------------------------
 
+-- xxx read RPF again!
+    {-
+canonDkimFieldValue :: DkimCanonAlgo -> FieldValue -> FieldValue
+canonDkimFieldValue DKIM_SIMPLE  _ = "" -- does not support
+canonDkimFieldValue DKIM_RELAXED bs = canon bs
+  where
+    canon = removeTrailingWSP . reduceWSP . L.dropWhile isSpace
+-}
+
+----------------------------------------------------------------
+
+canonDkimBody :: DkimCanonAlgo -> Body -> L.ByteString
+canonDkimBody DKIM_SIMPLE bd  = canonDkimBodyCore id removeTrailingEmptyLine bd
+canonDkimBody DKIM_RELAXED bd = canonDkimBodyCore relax removeTrailingEmptyLine bd
+  where
+    relax = removeTrailingWSP . reduceWSP
+
+canonDkimBodyCore :: Cook -> (Body -> Body) -> Body -> L.ByteString
+canonDkimBodyCore remFWS remTEL = fromBodyWith remFWS . remTEL
+
+----------------------------------------------------------------
+
 verifyDKIM :: PublicKey -> L.ByteString -> L.ByteString -> Bool
-verifyDKIM pub sig mail = rsassa_pkcs1_v1_5_verify ha_SHA1 pub mail sig
+--verifyDKIM pub sig mail = rsassa_pkcs1_v1_5_verify ha_SHA256 pub mail sig --- xxx chose SHA
+verifyDKIM _ sig mail = sig == mail
