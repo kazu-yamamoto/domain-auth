@@ -3,7 +3,6 @@
 module Network.DomainAuth.DK.Parser where
 
 import qualified Data.ByteString.Lazy.Char8 as L
-import Data.Char
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe

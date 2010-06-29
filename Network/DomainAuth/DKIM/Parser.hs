@@ -4,8 +4,6 @@ module Network.DomainAuth.DKIM.Parser where
 
 import Control.Applicative
 import qualified Data.ByteString.Lazy.Char8 as L
-import Data.Char
-import Data.List
 import Data.Maybe
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
