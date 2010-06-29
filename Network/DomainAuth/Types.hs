@@ -19,4 +19,18 @@ data DAResult = DAPass
               | DANxDomain
               | DADiscard
               | DAUnknown
-              deriving (Eq,Enum,Bounded,Show)
+              deriving (Eq,Enum,Bounded)
+
+instance Show DAResult where
+    show DAPass       = "pass"
+    show DAHardFail   = "hardfail"
+    show DASoftFail   = "fail"
+    show DANeutral    = "neutral"
+    show DAFail       = "fail"
+    show DATempError  = "temperror"
+    show DAPermError  = "permerror"
+    show DANone       = "none"
+    show DAPolicy     = "policy"
+    show DANxDomain   = "nxdomain"
+    show DADiscard    = "discard"
+    show DAUnknown    = "unknown"
