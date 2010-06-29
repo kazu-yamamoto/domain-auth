@@ -10,7 +10,6 @@ import Network.DomainAuth.DKIM.Parser
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.DKIM.Verify
 import Network.DomainAuth.Mail
-import qualified Network.DomainAuth.Pubkey.Base64 as B
 import Network.DomainAuth.Pubkey.RSAPub
 import Network.DomainAuth.Types
 
@@ -22,10 +21,8 @@ runDKIM resolver mail = dkim1
     dkim3       = runDKIM' resolver mail
 
 runDKIM' :: Resolver -> Mail -> DKIM -> IO DAResult
-runDKIM' resolver mail dkim = maybe DATempError (verify sig cmail) <$> pub
+runDKIM' resolver mail dkim = maybe DATempError (verify mail dkim) <$> pub
   where
     pub = lookupPublicKey resolver dom
     dom = dkimSelector dkim ++ "._domainkey." ++ dkimDomain dkim
-    sig = B.decode (dkimSignature dkim)
-    cmail = prepareDKIM dkim mail
-    verify s c p = if verifyDKIM p s c then DAPass else DAFail
+    verify m d p = if verifyDKIM m d p then DAPass else DAFail

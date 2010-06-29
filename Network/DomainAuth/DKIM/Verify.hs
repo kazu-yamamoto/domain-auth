@@ -7,40 +7,31 @@ module Network.DomainAuth.DKIM.Verify (
 import Codec.Crypto.RSA
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Char
-import Network.DomainAuth.DKIM.Types
+import Data.Digest.Pure.SHA
 import Network.DomainAuth.DKIM.Btag
+import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
+import qualified Network.DomainAuth.Pubkey.Base64 as B
 import Network.DomainAuth.Utils
 
 ----------------------------------------------------------------
 
 prepareDKIM :: DKIM -> Mail -> L.ByteString
-prepareDKIM dkim mail = cmail
+prepareDKIM dkim mail = header
   where
-    dkimVal = maybe "" (foldr func "") $ lookupField dkimFieldKey (mailHeader mail)
-    -- xxx ": " for SIMPLE
---    dkimSig = dkimFieldKey +++ ":" +++ canon (deleteAfterB dkimVal) +++ ";" --- xx
-    dkimSig = dkimFieldKey +++ ":" +++ canon (removeBtagValue dkimVal)
-    hCanon = dkimHeaderCanon dkim
-    header' = foldr (func . canonDkimFieldValue hCanon) "" fields +++ dkimSig
-    fields  = fieldsWith (dkimFields dkim) $ fieldsAfter dkimFieldKey (mailHeader mail)
---    body'   = canonDkimBody (dkimBodyCanon dkim) (mailBody mail) -- to be in verified
-    func x y = x +++ crlf +++ y
-    cmail = header'
+    dkimField:fields = fieldsFrom dkimFieldKey (mailHeader mail)
+    hCanon = canonDkimFieldValue (dkimHeaderCanon dkim)
+    canon = removeBtagValue . hCanon
+    targets = fieldsWith (dkimFields dkim) fields
+    header = concatCRLFWith hCanon targets +++ canon dkimField
 
 ----------------------------------------------------------------
 
 canonDkimFieldValue :: DkimCanonAlgo -> Field -> L.ByteString
-canonDkimFieldValue DKIM_SIMPLE fld = fieldKey fld +++ ": " +++ value fld
+canonDkimFieldValue DKIM_SIMPLE fld = fieldKey fld +++ ": " +++ fieldRawValue fld
+canonDkimFieldValue DKIM_RELAXED fld = fieldSearchKey fld +++ ":" +++ canon fld
   where
-    value = foldr func "" . fieldValue
-    func x y = x +++ crlf +++ y
-canonDkimFieldValue DKIM_RELAXED fld = fieldSearchKey fld +++ ":" +++ value fld
-  where
-    value = canon . L.concat . fieldValue
-
-canon :: L.ByteString -> L.ByteString
-canon = L.dropWhile isSpace . removeTrailingWSP . reduceWSP
+    canon = L.dropWhile isSpace . removeTrailingWSP . reduceWSP . L.concat . fieldValue
 
 ----------------------------------------------------------------
 
@@ -55,5 +46,23 @@ canonDkimBodyCore remFWS remTEL = fromBodyWith remFWS . remTEL
 
 ----------------------------------------------------------------
 
-verifyDKIM :: PublicKey -> L.ByteString -> L.ByteString -> Bool
-verifyDKIM pub sig mail = rsassa_pkcs1_v1_5_verify ha_SHA256 pub mail sig --- xxx chose SHA
+verifyDKIM :: Mail -> DKIM -> PublicKey -> Bool
+verifyDKIM mail dkim pub = bodyHash1 mail == bodyHash2 dkim &&
+                           rsassa_pkcs1_v1_5_verify hashfunc pub cmail sig
+  where
+    hashfunc = hashAlgo1 (dkimSigAlgo dkim)
+    hashfunc2 = hashAlgo2 (dkimSigAlgo dkim)
+    sig = B.decode (dkimSignature dkim)
+    cmail = prepareDKIM dkim mail
+    bodyHash1 = bytestringDigest . hashfunc2 . canonDkimBody (dkimBodyCanon dkim) . mailBody
+    bodyHash2 = B.decode . dkimBodyHash
+
+hashAlgo1 :: DkimSigAlgo -> HashInfo
+hashAlgo1 RSA_SHA1   = ha_SHA1
+hashAlgo1 RSA_SHA256 = ha_SHA256
+
+hashAlgo2 :: DkimSigAlgo -> L.ByteString -> Digest
+hashAlgo2 RSA_SHA1   = sha1
+hashAlgo2 RSA_SHA256 = sha256
+
+

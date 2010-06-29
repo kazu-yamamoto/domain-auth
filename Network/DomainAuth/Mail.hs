@@ -7,7 +7,7 @@ import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Char
 import Data.Int
 import Data.List
-import Data.Foldable as F (foldr)
+import qualified Data.Foldable as F (foldr)
 import Data.Sequence (Seq, fromList, viewr, ViewR(..), empty)
 import Network.DomainAuth.Utils
 
@@ -20,11 +20,14 @@ data Mail = Mail {
 
 type Header = [Field]
 
-data Field  = Field {
+data Field = Field {
     fieldSearchKey :: CanonFieldKey
   , fieldKey       :: FieldKey
   , fieldValue     :: FieldValue
   } deriving (Eq,Show)
+
+fieldRawValue :: Field -> RawFieldValue
+fieldRawValue = concatCRLF . fieldValue
 
 type CanonFieldKey = L.ByteString
 type FieldKey = L.ByteString
@@ -168,11 +171,14 @@ findEOH bs cnt
 
 ----------------------------------------------------------------
 
-fieldsAfter :: FieldKey -> Header -> Header
-fieldsAfter key hdr = safeTail flds
+fieldsFrom :: FieldKey -> Header -> Header
+fieldsFrom key = dropWhile (ckey `isNotKeyOf`)
   where
-    flds = dropWhile (ckey `isNotKeyOf`) hdr
     ckey = canonicalizeKey key
+
+fieldsAfter :: FieldKey -> Header -> Header
+fieldsAfter key = safeTail . fieldsFrom key
+  where
     safeTail [] = []
     safeTail xs = tail xs
 
@@ -237,6 +243,4 @@ fromBody :: Body -> L.ByteString
 fromBody = fromBodyWith id
 
 fromBodyWith :: (L.ByteString -> L.ByteString) -> Body -> L.ByteString
-fromBodyWith modify = F.foldr func ""
-  where
-    func x y = modify x +++ crlf +++ y
+fromBodyWith modify = F.foldr (appendCRLFWith modify) ""

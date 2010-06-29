@@ -17,6 +17,20 @@ crlf = "\r\n"
 
 ----------------------------------------------------------------
 
+appendCRLF :: L.ByteString -> L.ByteString -> L.ByteString
+appendCRLF x y = x +++ crlf +++ y
+
+appendCRLFWith :: (a -> L.ByteString) -> a -> L.ByteString -> L.ByteString
+appendCRLFWith modify x y = modify x +++ crlf +++ y
+
+concatCRLF :: [L.ByteString] -> L.ByteString
+concatCRLF = foldr appendCRLF ""
+
+concatCRLFWith :: (a -> L.ByteString) -> [a] -> L.ByteString
+concatCRLFWith modify = foldr (appendCRLFWith modify) ""
+
+----------------------------------------------------------------
+
 {-|
   Replaces multiple WPSs to a single SP.
 -}
