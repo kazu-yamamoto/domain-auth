@@ -182,19 +182,16 @@ fieldsAfter key hdr = safeTail flds
   RFC 4871 is ambiguous, so implement only normal case.
 -}
 
-fieldsForDKIM :: FieldKey -> [CanonFieldKey] -> Header -> Header
-fieldsForDKIM key flds hdr = ffind flds after
+fieldsWith :: [CanonFieldKey] -> Header -> Header
+fieldsWith [] _ = []
+fieldsWith _ [] = []
+fieldsWith (k:ks) is
+  | fs == []  = fieldsWith (k:ks) (tail is')
+  | otherwise = take len (reverse fs) ++ fieldsWith ks' is'
   where
-    after = fieldsAfter key hdr
-
-ffind :: [CanonFieldKey] -> Header -> Header
-ffind [] _ = []
-ffind _ [] = []
-ffind (k:ks) is
-  | is' == [] = []
-  | otherwise = head is' : ffind ks (tail is')
-  where
-    is' = dropWhile (\fld -> fieldSearchKey fld /= k) is
+    (fs,is') = span (\fld -> fieldSearchKey fld == k) is
+    (kx,ks') = span (==k) ks
+    len = length kx + 1 -- including k
 
 ----------------------------------------------------------------
 
