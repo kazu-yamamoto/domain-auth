@@ -1,5 +1,5 @@
 {-|
-  Utilities to decide Purported Responsible Domain, RFC 4407.
+  Utilities to decide Purported Responsible Domain (<http://www.ietf.org/rfc/rfc4407>).
 -}
 
 module Network.DomainAuth.PRD (

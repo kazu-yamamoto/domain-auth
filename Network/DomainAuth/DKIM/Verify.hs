@@ -20,29 +20,26 @@ prepareDKIM :: DKIM -> Mail -> L.ByteString
 prepareDKIM dkim mail = header
   where
     dkimField:fields = fieldsFrom dkimFieldKey (mailHeader mail)
-    hCanon = canonDkimFieldValue (dkimHeaderCanon dkim)
+    hCanon = canonDkimField (dkimHeaderCanon dkim)
     canon = removeBtagValue . hCanon
     targets = fieldsWith (dkimFields dkim) fields
     header = concatCRLFWith hCanon targets +++ canon dkimField
 
 ----------------------------------------------------------------
 
-canonDkimFieldValue :: DkimCanonAlgo -> Field -> L.ByteString
-canonDkimFieldValue DKIM_SIMPLE fld = fieldKey fld +++ ": " +++ fieldRawValue fld
-canonDkimFieldValue DKIM_RELAXED fld = fieldSearchKey fld +++ ":" +++ canon fld
+canonDkimField :: DkimCanonAlgo -> Field -> L.ByteString
+canonDkimField DKIM_SIMPLE fld  = fieldKey fld +++ ": " +++ fieldValueFolded fld
+canonDkimField DKIM_RELAXED fld = fieldSearchKey fld +++ ":" +++ canon fld
   where
     canon = L.dropWhile isSpace . removeTrailingWSP . reduceWSP . L.concat . fieldValue
 
 ----------------------------------------------------------------
 
 canonDkimBody :: DkimCanonAlgo -> Body -> L.ByteString
-canonDkimBody DKIM_SIMPLE bd  = canonDkimBodyCore id removeTrailingEmptyLine bd
-canonDkimBody DKIM_RELAXED bd = canonDkimBodyCore relax removeTrailingEmptyLine bd
+canonDkimBody DKIM_SIMPLE  = fromBody . removeTrailingEmptyLine
+canonDkimBody DKIM_RELAXED = fromBodyWith relax . removeTrailingEmptyLine
   where
     relax = removeTrailingWSP . reduceWSP
-
-canonDkimBodyCore :: Cook -> (Body -> Body) -> Body -> L.ByteString
-canonDkimBodyCore remFWS remTEL = fromBodyWith remFWS . remTEL
 
 ----------------------------------------------------------------
 

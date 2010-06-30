@@ -9,6 +9,9 @@ import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
 import Prelude hiding (catch)
 
+{-|
+  Parsing DKIM-Signature:.
+-}
 parseDKIM :: RawFieldValue -> Maybe DKIM
 parseDKIM val = toDKIM domkey
   where

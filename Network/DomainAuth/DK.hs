@@ -1,7 +1,17 @@
+{-|
+  A library for DomainKeys (<http://www.ietf.org/rfc4070>).
+  Currently, only receiver side is implemented.
+-}
+
 module Network.DomainAuth.DK (
-    dkFieldKey, parseDK
+  -- * Documentation
+  -- ** Authentication with DK
+    runDK, runDK'
+  -- ** Parsing DomainKey-Signature:
+  , parseDK
   , DK, dkDomain, dkSelector
-  , runDK, runDK'
+  -- ** Field key for DomainKey-Signature:
+  , dkFieldKey
   ) where
 
 import Control.Applicative
@@ -13,13 +23,20 @@ import Network.DomainAuth.Mail
 import Network.DomainAuth.Pubkey.RSAPub
 import Network.DomainAuth.Types
 
+{-|
+  Verifying 'Mail' with DomainKeys.
+-}
 runDK :: Resolver -> Mail -> IO DAResult
 runDK resolver mail = dk1
   where
     dk1     = maybe (return DANone)      dk2 $ lookupField dkFieldKey (mailHeader mail)
-    dk2 dkv = maybe (return DAPermError) dk3 $ parseDK (toRaw dkv)
+    dk2 dkv = maybe (return DAPermError) dk3 $ parseDK (fieldValueUnfolded dkv)
     dk3     = runDK' resolver mail
 
+{-|
+  Verifying 'Mail' with DomainKeys. The value of DomainKey-Signature:
+  should be parsed beforehand.
+-}
 runDK' :: Resolver -> Mail -> DK -> IO DAResult
 runDK' resolver mail dk = maybe DATempError (verify mail dk) <$> pub
   where

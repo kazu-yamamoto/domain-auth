@@ -1,3 +1,7 @@
+{-|
+ A library for SPF(<http://www.ietf.org/rfc/rfc4408>)
+ and Sender-ID(<http://www.ietf.org/rfc/rfc4406>).
+-}
 module Network.DomainAuth.SPF (
     runSPF
   , Limit(..)

@@ -24,19 +24,15 @@ prepareDK dk mail = cmail
 ----------------------------------------------------------------
 
 canonDkHeader :: DK -> Header -> L.ByteString
-canonDkHeader dk hdr = canonDkHeader' calgo flds
+canonDkHeader dk hdr = concatCRLFWith (canonDkField calgo) flds
   where
     calgo = dkCanonAlgo dk
     hFields = dkFields dk
     flds = prepareDkHeader hFields hdr
 
-canonDkHeader' :: DkCanonAlgo -> Header -> L.ByteString
-canonDkHeader' DK_NOFWS  = concatCRLFWith fromField
-  where
-    fromField fld = L.concat $ fieldKey fld : ":" : map removeFWS (fieldValue fld)
-canonDkHeader' DK_SIMPLE = concatCRLFWith fromField
-  where
-    fromField fld = L.concat $ fieldKey fld : ": " : fieldValue fld
+canonDkField :: DkCanonAlgo -> Field -> L.ByteString
+canonDkField DK_SIMPLE fld = fieldKey fld +++ ": " +++ fieldValueFolded fld
+canonDkField DK_NOFWS  fld = fieldKey fld +++ ":" +++ removeFWS (fieldValueUnfolded fld)
 
 prepareDkHeader :: Maybe DkFields -> Header -> Header
 prepareDkHeader Nothing hdr = fieldsAfter dkFieldKey hdr
@@ -47,8 +43,8 @@ prepareDkHeader (Just hFields) hdr = filter isInHTag $ fieldsAfter dkFieldKey hd
 ----------------------------------------------------------------
 
 canonDkBody :: DkCanonAlgo -> Body -> L.ByteString
-canonDkBody DK_SIMPLE bd = fromBody . removeTrailingEmptyLine $ bd
-canonDkBody DK_NOFWS  bd = fromBodyWith removeFWS . removeTrailingEmptyLine $ bd
+canonDkBody DK_SIMPLE = fromBody . removeTrailingEmptyLine
+canonDkBody DK_NOFWS  = fromBodyWith removeFWS . removeTrailingEmptyLine
 
 ----------------------------------------------------------------
 

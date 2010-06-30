@@ -1,3 +1,7 @@
+{-|
+  Type for Message Authentication Status (<http://www.ietf.org/rfc/rfc5451.txt>).
+-}
+
 module Network.DomainAuth.Types where
 
 ----------------------------------------------------------------

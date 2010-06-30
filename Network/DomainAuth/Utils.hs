@@ -88,3 +88,13 @@ chop bs
 
 blines :: L.ByteString -> [L.ByteString]
 blines = map chop . L.lines
+
+----------------------------------------------------------------
+
+break' :: Char -> L.ByteString -> (L.ByteString,L.ByteString)
+break' c bs = (f,s)
+  where
+    (f,s') = L.break (==c) bs
+    s = if s' == ""
+        then ""
+        else L.tail s'

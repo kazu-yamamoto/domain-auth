@@ -22,6 +22,10 @@ library
                         Network.DomainAuth.PRD
                         Network.DomainAuth.Types
   Other-Modules:        Network.DomainAuth.Utils
+                        Network.DomainAuth.Mail.Mail
+                        Network.DomainAuth.Mail.Parser
+                        Network.DomainAuth.Mail.Types
+                        Network.DomainAuth.Mail.XMail
                         Network.DomainAuth.DK.Parser
                         Network.DomainAuth.DK.Types
                         Network.DomainAuth.DK.Verify

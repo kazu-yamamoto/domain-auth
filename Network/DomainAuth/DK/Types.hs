@@ -9,6 +9,9 @@ import Network.DomainAuth.Mail
 
 ----------------------------------------------------------------
 
+{-|
+  Canonicalized key for DomainKey-Signature:.
+-}
 dkFieldKey :: CanonFieldKey
 dkFieldKey = "domainkey-signature"
 
@@ -33,8 +36,14 @@ data DK = DK {
   , dkSelector0 :: L.ByteString
   } deriving (Eq,Show)
 
+{-|
+  Getting of the value of the \"d\" tag in DomainKey-Signature:.
+-}
 dkDomain :: DK -> Domain
 dkDomain = L.unpack . dkDomain0
 
+{-|
+  Getting of the value of the \"s\" tag in DomainKey-Signature:.
+-}
 dkSelector :: DK -> String
 dkSelector = L.unpack . dkSelector0

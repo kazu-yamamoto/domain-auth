@@ -10,6 +10,9 @@ import Network.DomainAuth.DK.Types
 import Network.DomainAuth.Mail
 import Prelude hiding (catch)
 
+{-|
+  Parsing DomainKey-Signature:.
+-}
 parseDK :: RawFieldValue -> Maybe DK
 parseDK val = toDK domkey
   where
