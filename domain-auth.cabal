@@ -3,8 +3,9 @@ Version:                0.1.0
 Author:                 Kazu Yamamoto <kazu@iij.ad.jp>
 Maintainer:             Kazu Yamamoto <kazu@iij.ad.jp>
 License:                BSD3
+License-File:           LICENSE
 Synopsis:               Domain authentication library
-Description:            Library for Sender Policy Framework, SenderID, 
+Description:            Library for Sender Policy Framework, SenderID,
                         DomainKeys and DKIM.
 Category:               Network
 Cabal-Version:          >= 1.6
