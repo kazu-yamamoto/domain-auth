@@ -1,5 +1,5 @@
 {-|
-  A library for DomainKeys (<http://www.ietf.org/rfc4070>).
+  A library for DomainKeys (<http://www.ietf.org/rfc/rfc4070>).
   Currently, only receiver side is implemented.
 -}
 

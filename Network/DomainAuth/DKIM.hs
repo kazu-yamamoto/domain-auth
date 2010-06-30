@@ -1,5 +1,5 @@
 {-|
-  A library for DKIM (<http://www.ietf.org/rfc4071>).
+  A library for DKIM (<http://www.ietf.org/rfc/rfc4071>).
   Currently, only receiver side is implemented.
 -}
 
