@@ -2,7 +2,6 @@ module Network.DomainAuth.PRD.Lexer (
     structured
   ) where
 
-import Control.Applicative
 import Text.Appar.LazyByteString
 
 ----------------------------------------------------------------

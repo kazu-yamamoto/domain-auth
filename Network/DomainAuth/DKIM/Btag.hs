@@ -1,6 +1,5 @@
 module Network.DomainAuth.DKIM.Btag where
 
-import Control.Applicative
 import Data.ByteString.Lazy.Char8
 import Data.Maybe
 import Text.Appar.LazyByteString

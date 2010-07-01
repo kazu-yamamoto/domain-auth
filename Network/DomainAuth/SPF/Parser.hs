@@ -1,6 +1,5 @@
 module Network.DomainAuth.SPF.Parser (parseSPF) where
 
-import Control.Applicative
 import qualified Data.ByteString.Lazy.Char8 as L
 import Network.DNS (Domain)
 import Network.DomainAuth.SPF.Types
