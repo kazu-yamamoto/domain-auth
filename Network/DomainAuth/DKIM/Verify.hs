@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, RankNTypes #-}
 
 module Network.DomainAuth.DKIM.Verify (
     verifyDKIM, prepareDKIM
@@ -51,15 +51,15 @@ verifyDKIM mail dkim pub = bodyHash1 mail == bodyHash2 dkim &&
     hashfunc2 = hashAlgo2 (dkimSigAlgo dkim)
     sig = B.decode (dkimSignature dkim)
     cmail = prepareDKIM dkim mail
-    bodyHash1 = bytestringDigest . hashfunc2 . canonDkimBody (dkimBodyCanon dkim) . mailBody
+    bodyHash1 = hashfunc2 . canonDkimBody (dkimBodyCanon dkim) . mailBody
     bodyHash2 = B.decode . dkimBodyHash
 
 hashAlgo1 :: DkimSigAlgo -> HashInfo
 hashAlgo1 RSA_SHA1   = ha_SHA1
 hashAlgo1 RSA_SHA256 = ha_SHA256
 
-hashAlgo2 :: DkimSigAlgo -> L.ByteString -> Digest
-hashAlgo2 RSA_SHA1   = sha1
-hashAlgo2 RSA_SHA256 = sha256
+hashAlgo2 :: DkimSigAlgo -> L.ByteString -> L.ByteString
+hashAlgo2 RSA_SHA1   = bytestringDigest . sha1
+hashAlgo2 RSA_SHA256 = bytestringDigest . sha256
 
 

@@ -74,6 +74,8 @@ tests = [
   , testGroup "DKIM" [
          testCase "dkim iij" test_dkim_iij
        , testCase "dkim gmail" test_dkim_gmail
+       , testCase "dkim nifty" test_dkim_nifty
+       , testCase "dkim iij4u" test_dkim_iij4u
        ]
   , testGroup "Mail" [
          testCase "dk yahoo" test_mail
@@ -373,6 +375,22 @@ test_dkim_iij = do
 test_dkim_gmail :: Assertion
 test_dkim_gmail = do
     mail <- readMail "data/gmail"
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    DNS.withResolver rs $ \resolver -> do
+        res <- runDKIM resolver mail
+        res @?= DAPass
+
+test_dkim_nifty :: Assertion
+test_dkim_nifty = do
+    mail <- readMail "data/nifty"
+    rs <- DNS.makeResolvSeed DNS.defaultResolvConf
+    DNS.withResolver rs $ \resolver -> do
+        res <- runDKIM resolver mail
+        res @?= DAPass
+
+test_dkim_iij4u :: Assertion
+test_dkim_iij4u = do
+    mail <- readMail "data/iij4u"
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     DNS.withResolver rs $ \resolver -> do
         res <- runDKIM resolver mail
