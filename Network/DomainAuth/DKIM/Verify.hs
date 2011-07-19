@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, RankNTypes #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Network.DomainAuth.DKIM.Verify (
     verifyDKIM, prepareDKIM
