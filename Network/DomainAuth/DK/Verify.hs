@@ -6,7 +6,7 @@ module Network.DomainAuth.DK.Verify (
 
 import Codec.Crypto.RSA
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map as M
 import Network.DomainAuth.DK.Types
 import Network.DomainAuth.Mail
@@ -52,5 +52,5 @@ canonDkBody DK_NOFWS  = fromBodyWith removeFWS . removeTrailingEmptyLine
 verifyDK :: Mail -> DK -> PublicKey -> Bool
 verifyDK mail dk pub = rsassa_pkcs1_v1_5_verify ha_SHA1 pub cmail sig
   where
-    sig = L.fromChunks [B.decode (dkSignature dk)]
-    cmail = L.fromChunks [prepareDK dk mail]
+    sig = BL.fromChunks [B.decode (dkSignature dk)]
+    cmail = BL.fromChunks [prepareDK dk mail]

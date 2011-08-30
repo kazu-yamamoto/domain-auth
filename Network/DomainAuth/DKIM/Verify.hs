@@ -7,7 +7,7 @@ module Network.DomainAuth.DKIM.Verify (
 import Codec.Crypto.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
-import qualified Data.ByteString.Lazy.Char8 as BL
+import qualified Data.ByteString.Lazy as BL
 import Data.Char
 import Data.Digest.Pure.SHA
 import Network.DomainAuth.DKIM.Btag

@@ -11,7 +11,7 @@ import Control.Monad
 import Data.Binary.Get
 import Data.Bits
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString.Lazy as BL
 
 ----------------------------------------------------------------
 
@@ -35,7 +35,7 @@ type Size = Int
 ----------------------------------------------------------------
 
 decode :: ByteString -> TLV
-decode bs = runGet der $ L.fromChunks [bs]
+decode bs = runGet der $ BL.fromChunks [bs]
 
 ----------------------------------------------------------------
 
