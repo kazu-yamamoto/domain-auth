@@ -61,5 +61,5 @@ hashAlgo1 RSA_SHA1   = ha_SHA1
 hashAlgo1 RSA_SHA256 = ha_SHA256
 
 hashAlgo2 :: DkimSigAlgo -> ByteString -> ByteString
-hashAlgo2 RSA_SHA1   x = BS.pack . showDigest . sha1 $ (BL.fromChunks [x])
-hashAlgo2 RSA_SHA256 x = BS.pack . showDigest . sha256 $ (BL.fromChunks [x])
+hashAlgo2 RSA_SHA1   x = head . BL.toChunks . bytestringDigest . sha1 $ (BL.fromChunks [x])
+hashAlgo2 RSA_SHA256 x = head . BL.toChunks . bytestringDigest . sha256 $ (BL.fromChunks [x])
