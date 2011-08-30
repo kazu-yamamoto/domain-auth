@@ -1,14 +1,15 @@
 module Network.DomainAuth.SPF.Parser (parseSPF) where
 
-import qualified Data.ByteString.Lazy.Char8 as L
+import Data.ByteString (ByteString)
+import Data.ByteString.Char8 as BS (pack)
 import Network.DNS (Domain)
 import Network.DomainAuth.SPF.Types
 import Prelude hiding (all)
-import Text.Appar.LazyByteString
+import Text.Appar.ByteString
 
 ----------------------------------------------------------------
 
-parseSPF :: L.ByteString  -> Maybe [SPF]
+parseSPF :: ByteString -> Maybe [SPF]
 parseSPF = parse spf
 
 ----------------------------------------------------------------
@@ -72,8 +73,8 @@ include q = SPF_Include q <$> (string "include:" *> domain)
 
 ----------------------------------------------------------------
 
-domain :: Parser String
-domain = some (oneOf $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_-.")
+domain :: Parser Domain
+domain = BS.pack <$> some (oneOf $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_-.")
 
 optionalDomain :: Parser (Maybe Domain)
 optionalDomain = option Nothing (Just <$> (char ':' *> domain))

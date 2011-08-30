@@ -2,7 +2,7 @@
 
 module Test where
 
-import qualified Data.ByteString.Lazy.Char8 as LC (pack,unpack)
+import qualified Data.ByteString.Char8 as BS (pack,unpack)
 import Data.IP
 import Network.DNS as DNS hiding (answer)
 import Network.DomainAuth
@@ -306,7 +306,7 @@ test_lookup_yahoo = do
     pub0 <- readFile "data/yahoo.pub"
     DNS.withResolver rs $ \resolver -> do
         Just pub1 <- lookupPublicKey' resolver "dk200510._domainkey.yahoo.co.jp"
-        LC.unpack pub1 @?= init pub0 -- removing "\n"
+        BS.unpack pub1 @?= init pub0 -- removing "\n"
 
 test_lookup_gmail :: Assertion
 test_lookup_gmail = do
@@ -314,7 +314,7 @@ test_lookup_gmail = do
     pub0 <- readFile "data/gmail.pub"
     DNS.withResolver rs $ \resolver -> do
         Just pub1 <- lookupPublicKey' resolver "gamma._domainkey.gmail.com"
-        LC.unpack pub1 @?= init pub0 -- removing "\n"
+        BS.unpack pub1 @?= init pub0 -- removing "\n"
 
 test_lookup_iij :: Assertion
 test_lookup_iij = do
@@ -322,7 +322,7 @@ test_lookup_iij = do
     pub0 <- readFile "data/iij.pub"
     DNS.withResolver rs $ \resolver -> do
         Just pub1 <- lookupPublicKey' resolver "omgo1._domainkey.iij.ad.jp"
-        LC.unpack pub1 @?= init pub0 -- removing "\n"
+        BS.unpack pub1 @?= init pub0 -- removing "\n"
 
 ----------------------------------------------------------------
 
@@ -401,7 +401,7 @@ test_dkim_iij4u = do
 test_mail :: Assertion
 test_mail = getMail inp @?= out
   where
-    inp = LC.pack "from: val\nto: val\n\nbody"
+    inp = BS.pack "from: val\nto: val\n\nbody"
     out = finalizeMail
         $ pushBody "body"
         $ pushField "to" "val"
@@ -411,7 +411,7 @@ test_mail = getMail inp @?= out
 test_mail2 :: Assertion
 test_mail2 = getMail inp @?= out
   where
-    inp = LC.pack "from: val\tval\nto: val\n\nbody"
+    inp = BS.pack "from: val\tval\nto: val\n\nbody"
     out = finalizeMail
         $ pushBody "body"
         $ pushField "to" "val"
@@ -421,7 +421,7 @@ test_mail2 = getMail inp @?= out
 test_mail3 :: Assertion
 test_mail3 = getMail inp @?= out
   where
-    inp = LC.pack "from: val\nto: val\n"
+    inp = BS.pack "from: val\nto: val\n"
     out = finalizeMail
         $ pushBody ""
         $ pushField "to" "val"

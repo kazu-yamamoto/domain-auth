@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-|
   A library for DKIM (<http://www.ietf.org/rfc/rfc4071>).
   Currently, only receiver side is implemented.
@@ -14,6 +16,7 @@ module Network.DomainAuth.DKIM (
   , dkimFieldKey
   ) where
 
+import qualified Data.ByteString as BS
 import Control.Applicative
 import Network.DNS as DNS (Resolver)
 import Network.DomainAuth.DKIM.Parser
@@ -41,5 +44,6 @@ runDKIM' :: Resolver -> Mail -> DKIM -> IO DAResult
 runDKIM' resolver mail dkim = maybe DATempError (verify mail dkim) <$> pub
   where
     pub = lookupPublicKey resolver dom
-    dom = dkimSelector dkim ++ "._domainkey." ++ dkimDomain dkim
+    dom = dkimSelector dkim +++ "._domainkey." +++ dkimDomain dkim
     verify m d p = if verifyDKIM m d p then DAPass else DAFail
+    (+++) = BS.append

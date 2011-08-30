@@ -1,21 +1,22 @@
 module Network.DomainAuth.Mail.Types where
 
-import qualified Data.ByteString.Lazy.Char8 as L
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as BS
 import Data.Char
 import Data.Sequence
 
 ----------------------------------------------------------------
 -- | Type for raw e-mail message.
-type RawMail = L.ByteString
-type RawHeader = L.ByteString
-type RawBody = L.ByteString
-type RawField = L.ByteString
+type RawMail = ByteString
+type RawHeader = ByteString
+type RawBody = ByteString
+type RawField = ByteString
 -- | Field key for raw e-mail message.
-type RawFieldKey = L.ByteString
+type RawFieldKey = ByteString
 -- | Field value for raw e-mail message.
-type RawFieldValue = L.ByteString
+type RawFieldValue = ByteString
 -- | Body chunk for raw e-mail message.
-type RawBodyChunk = L.ByteString
+type RawBodyChunk = ByteString
 
 ----------------------------------------------------------------
 
@@ -42,16 +43,16 @@ data Field = Field {
   } deriving (Eq,Show)
 
 -- | Type for canonicalized field key of parsed e-mail message.
-type CanonFieldKey = L.ByteString
+type CanonFieldKey = ByteString
 -- | Type for field key of parsed e-mail message.
-type FieldKey = L.ByteString
+type FieldKey = ByteString
 -- | Type for field value of parsed e-mail message.
-type FieldValue = [L.ByteString]
+type FieldValue = [ByteString]
 -- | Type for body of parsed e-mail message.
-type Body = Seq L.ByteString
+type Body = Seq ByteString
 
 ----------------------------------------------------------------
 
 -- | Canonicalizing 'FieldKey' for search.
 canonicalizeKey :: FieldKey -> CanonFieldKey
-canonicalizeKey = L.map toLower
+canonicalizeKey = BS.map toLower

@@ -1,6 +1,6 @@
 module Network.DomainAuth.Mail.XMail where
 
-import qualified Data.ByteString.Lazy.Char8 as L
+import qualified Data.ByteString.Char8 as BS
 import Data.Sequence (fromList)
 import Network.DomainAuth.Mail.Types
 import Network.DomainAuth.Utils
@@ -36,5 +36,5 @@ pushBody bc xmail = xmail {
 finalizeMail :: XMail -> Mail
 finalizeMail xmail = Mail {
     mailHeader = reverse . xmailHeader $ xmail
-  , mailBody = fromList . blines . L.concat . reverse . xmailBody $ xmail
+  , mailBody = fromList . blines . BS.concat . reverse . xmailBody $ xmail
   }

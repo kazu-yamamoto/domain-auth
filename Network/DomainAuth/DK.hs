@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-|
   A library for DomainKeys (<http://www.ietf.org/rfc/rfc4070>).
   Currently, only receiver side is implemented.
@@ -22,6 +24,7 @@ import Network.DomainAuth.DK.Verify
 import Network.DomainAuth.Mail
 import Network.DomainAuth.Pubkey.RSAPub
 import Network.DomainAuth.Types
+import qualified Data.ByteString as BS (append)
 
 {-|
   Verifying 'Mail' with DomainKeys.
@@ -41,5 +44,6 @@ runDK' :: Resolver -> Mail -> DK -> IO DAResult
 runDK' resolver mail dk = maybe DATempError (verify mail dk) <$> pub
   where
     pub = lookupPublicKey resolver dom
-    dom = dkSelector dk ++ "._domainkey." ++ dkDomain dk
+    dom = dkSelector dk +++ "._domainkey." +++ dkDomain dk
     verify m d p = if verifyDK m d p then DAPass else DAFail
+    (+++) = BS.append

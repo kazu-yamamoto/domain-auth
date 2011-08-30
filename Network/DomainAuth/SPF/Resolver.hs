@@ -5,7 +5,7 @@ module Network.DomainAuth.SPF.Resolver (resolveSPF) where
 import Control.Applicative
 import Control.Monad
 import Data.IP
-import qualified Data.ByteString.Lazy.Char8 as L
+import qualified Data.ByteString.Char8 as BS
 import Data.Maybe
 import Network.DNS
 import Network.DomainAuth.SPF.Parser
@@ -24,10 +24,10 @@ resolveSPF resolver dom ip = do
     let is = filterSPFWithIP ip (fromJust jrs)
     return $ map (toSpfSeq resolver dom ip) is
   where
-    getSPFRR jrc = let ts = filter ("v=spf1" `L.isPrefixOf`) (fromJust jrc)
+    getSPFRR jrc = let ts = filter ("v=spf1" `BS.isPrefixOf`) (fromJust jrc)
                    in if null ts then "" else head ts
     checkSyntax rs estr = when (isNothing rs) (fail estr)
-    checkExistence rr estr = when (L.null rr) (fail estr)
+    checkExistence rr estr = when (BS.null rr) (fail estr)
 
 ----------------------------------------------------------------
 

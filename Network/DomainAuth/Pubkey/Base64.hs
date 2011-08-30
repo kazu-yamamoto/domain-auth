@@ -3,25 +3,26 @@
 module Network.DomainAuth.Pubkey.Base64 where
 
 import Data.Bits (shiftL, shiftR, (.&.), (.|.))
-import qualified Data.ByteString.Lazy.Char8 as L
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as BS
 import Data.Char (ord, chr, isAscii, isAlphaNum, isUpper, isLower, isDigit)
 import Network.DomainAuth.Utils
 
-decode :: L.ByteString -> L.ByteString
-decode = dec . L.filter valid
+decode :: ByteString -> ByteString
+decode = dec . BS.filter valid
   where
     valid c = isAscii c
               && (isAlphaNum c || (c `elem` "+/="))
 
-dec :: L.ByteString -> L.ByteString
+dec :: ByteString -> ByteString
 dec bs
-    | L.null bs             = ""
-    | len == 4 && c3 == '=' = L.take 1 (dec' x1 x2  0  0)
-    | len == 4 && c4 == '=' = L.take 2 (dec' x1 x2 x3  0)
+    | BS.null bs            = ""
+    | len == 4 && c3 == '=' = BS.take 1 (dec' x1 x2  0  0)
+    | len == 4 && c4 == '=' = BS.take 2 (dec' x1 x2 x3  0)
     | len >= 4              =           dec' x1 x2 x3 x4  +++ dec bs'
     | otherwise             = error "dec"
   where
-    len = L.length bs
+    len = BS.length bs
     c1 = bs !!! 0
     c2 = bs !!! 1
     c3 = bs !!! 2
@@ -30,10 +31,10 @@ dec bs
     x2 = fromChar c2
     x3 = fromChar c3
     x4 = fromChar c4
-    bs' = L.drop 4 bs
+    bs' = BS.drop 4 bs
 
-dec' :: Int -> Int -> Int -> Int -> L.ByteString
-dec' x1 x2 x3 x4 = L.pack [d1,d2,d3]
+dec' :: Int -> Int -> Int -> Int -> ByteString
+dec' x1 x2 x3 x4 = BS.pack [d1,d2,d3]
   where
     d1 = chr  ((x1 `shiftL` 2)           .|. (x2 `shiftR` 4))
     d2 = chr (((x2 `shiftL` 4) .&. 0xF0) .|. (x3 `shiftR` 2))

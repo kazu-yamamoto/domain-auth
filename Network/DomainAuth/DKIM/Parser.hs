@@ -3,7 +3,8 @@
 module Network.DomainAuth.DKIM.Parser where
 
 import Control.Applicative
-import qualified Data.ByteString.Lazy.Char8 as L
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as BS
 import Data.Maybe
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
@@ -17,7 +18,7 @@ parseDKIM val = toDKIM domkey
   where
     (ts,vs) = unzip $ parseTaggedValue val
     fs = map tagToSetter ts
-    tagToSetter tag = fromMaybe (\_ mdkim -> mdkim) $ lookup (L.unpack tag) dkimTagDB
+    tagToSetter tag = fromMaybe (\_ mdkim -> mdkim) $ lookup (BS.unpack tag) dkimTagDB
     pfs = zipWith ($) fs vs
     domkey = foldr ($) initialMDKIM pfs
     toDKIM mdkim = do
@@ -44,16 +45,16 @@ parseDKIM val = toDKIM domkey
           }
 
 data MDKIM = MDKIM {
-    mdkimVersion     :: Maybe L.ByteString
+    mdkimVersion     :: Maybe ByteString
   , mdkimSigAlgo     :: Maybe DkimSigAlgo
-  , mdkimSignature   :: Maybe L.ByteString
-  , mdkimBodyHash    :: Maybe L.ByteString
+  , mdkimSignature   :: Maybe ByteString
+  , mdkimBodyHash    :: Maybe ByteString
   , mdkimHeaderCanon :: Maybe DkimCanonAlgo
   , mdkimBodyCanon   :: Maybe DkimCanonAlgo
-  , mdkimDomain      :: Maybe L.ByteString
+  , mdkimDomain      :: Maybe ByteString
   , mdkimFields      :: Maybe [CanonFieldKey]
   , mdkimLength      :: Maybe Int
-  , mdkimSelector    :: Maybe L.ByteString
+  , mdkimSelector    :: Maybe ByteString
   } deriving (Eq,Show)
 
 initialMDKIM :: MDKIM
@@ -70,7 +71,7 @@ initialMDKIM = MDKIM {
   , mdkimSelector    = Nothing
   }
 
-type DKIMSetter = L.ByteString -> MDKIM -> MDKIM
+type DKIMSetter = ByteString -> MDKIM -> MDKIM
 
 dkimTagDB :: [(String,DKIMSetter)]
 dkimTagDB = [
@@ -128,10 +129,10 @@ setDkimDomain dom dkim = dkim { mdkimDomain = Just dom }
 setDkimFields :: DKIMSetter
 setDkimFields keys dkim = dkim { mdkimFields = Just flds }
   where
-    flds = map canonicalizeKey $ L.split ':' keys
+    flds = map canonicalizeKey $ BS.split ':' keys
 
 setDkimLength :: DKIMSetter
-setDkimLength len dkim = dkim { mdkimLength = fst <$> L.readInt len }
+setDkimLength len dkim = dkim { mdkimLength = fst <$> BS.readInt len }
 
 setDkimSelector :: DKIMSetter
 setDkimSelector sel dkim = dkim { mdkimSelector = Just sel }

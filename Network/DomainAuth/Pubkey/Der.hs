@@ -10,7 +10,8 @@ import Control.Applicative hiding (many)
 import Control.Monad
 import Data.Binary.Get
 import Data.Bits
-import qualified Data.ByteString.Lazy.Char8 as L
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Lazy as L
 
 ----------------------------------------------------------------
 
@@ -18,7 +19,7 @@ data TLV = Term
          | Prim { cls :: Class
                 , tag :: Tag
                 , siz :: Size
-                , cnt :: L.ByteString
+                , cnt :: ByteString
                 }
          | Cons { cls :: Class
                 , tag :: Tag
@@ -33,8 +34,8 @@ type Size = Int
 
 ----------------------------------------------------------------
 
-decode :: L.ByteString -> TLV
-decode = runGet der
+decode :: ByteString -> TLV
+decode bs = runGet der $ L.fromChunks [bs]
 
 ----------------------------------------------------------------
 
@@ -50,7 +51,7 @@ der = do
        else primitive clss tg len
 
 primitive :: Class -> Tag -> Int -> Get TLV
-primitive clss tg len = Prim clss tg len <$> getLazyByteString (fromIntegral len)
+primitive clss tg len = Prim clss tg len <$> getByteString (fromIntegral len)
 
 construct :: Class -> Tag -> Int -> Get TLV
 construct = definite

@@ -1,8 +1,8 @@
 module Network.DomainAuth.DKIM.Btag where
 
-import Data.ByteString.Lazy.Char8
+import Data.ByteString.Char8
 import Data.Maybe
-import Text.Appar.LazyByteString
+import Text.Appar.ByteString
 
 removeBtagValue :: ByteString -> ByteString
 removeBtagValue = pack . fromMaybe "" . parse remBtagValue

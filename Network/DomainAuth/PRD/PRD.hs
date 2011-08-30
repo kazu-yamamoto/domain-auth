@@ -11,7 +11,7 @@ module Network.DomainAuth.PRD.PRD (
   ) where
 
 import Control.Monad
-import qualified Data.ByteString.Lazy.Char8 as L
+import qualified Data.ByteString.Char8 as BS
 import Data.Char
 import Data.List (foldl')
 import Network.DNS (Domain)
@@ -61,7 +61,7 @@ pushPRD key val ctx = case ckey of
     "resent-sender" -> pushResentSender ctx' jdom
     _               -> ctx'
   where
-    ckey = L.map toLower key
+    ckey = BS.map toLower key
     jdom = extractDomain val
     ctx' = ctx { praHeader = (ckey,val) : praHeader ctx }
 
@@ -82,7 +82,7 @@ decidePRD ctx =
 decideFrom :: PRD -> Maybe Domain
 decideFrom = toMaybe . praFrom
 
-toMaybe :: DST -> Maybe String
+toMaybe :: DST -> Maybe Domain
 toMaybe (DST_Valid d) = Just d
 toMaybe _             = Nothing
 

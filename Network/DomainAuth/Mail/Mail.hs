@@ -2,7 +2,8 @@
 
 module Network.DomainAuth.Mail.Mail where
 
-import qualified Data.ByteString.Lazy.Char8 as L
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as BS
 import qualified Data.Foldable as F (foldr)
 import Data.List
 import Data.Sequence (Seq, viewr, ViewR(..), empty)
@@ -61,16 +62,16 @@ fieldValueFolded = concatCRLF . fieldValue
 
 -- | Obtaining unfolded (removing CRLF) field value.
 fieldValueUnfolded :: Field -> RawFieldValue
-fieldValueUnfolded = L.concat . fieldValue
+fieldValueUnfolded = BS.concat . fieldValue
 
 ----------------------------------------------------------------
 
 -- | Obtaining body.
-fromBody :: Body -> L.ByteString
+fromBody :: Body -> ByteString
 fromBody = fromBodyWith id
 
 -- | Obtaining body with a canonicalization function.
-fromBodyWith :: (L.ByteString -> L.ByteString) -> Body -> L.ByteString
+fromBodyWith :: (ByteString -> ByteString) -> Body -> ByteString
 fromBodyWith modify = F.foldr (appendCRLFWith modify) ""
 
 -- | Removing trailing empty lines.

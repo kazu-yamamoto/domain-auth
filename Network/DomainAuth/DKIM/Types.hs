@@ -2,7 +2,7 @@
 
 module Network.DomainAuth.DKIM.Types where
 
-import qualified Data.ByteString.Lazy.Char8 as L
+import Data.ByteString (ByteString)
 import Network.DNS
 import Network.DomainAuth.Mail
 
@@ -20,26 +20,26 @@ data DkimSigAlgo = RSA_SHA1 | RSA_SHA256 deriving (Eq,Show)
 data DkimCanonAlgo = DKIM_SIMPLE | DKIM_RELAXED deriving (Eq,Show)
 
 data DKIM = DKIM {
-    dkimVersion     :: L.ByteString
+    dkimVersion     :: ByteString
   , dkimSigAlgo     :: DkimSigAlgo
-  , dkimSignature   :: L.ByteString
-  , dkimBodyHash    :: L.ByteString
+  , dkimSignature   :: ByteString
+  , dkimBodyHash    :: ByteString
   , dkimHeaderCanon :: DkimCanonAlgo
   , dkimBodyCanon   :: DkimCanonAlgo
-  , dkimDomain0     :: L.ByteString
+  , dkimDomain0     :: ByteString
   , dkimFields      :: [CanonFieldKey]
   , dkimLength      :: Maybe Int
-  , dkimSelector0   :: L.ByteString
+  , dkimSelector0   :: ByteString
   } deriving (Eq,Show)
 
 {-|
   Getting of the value of the \"d\" tag in DKIM-Signature:.
 -}
 dkimDomain :: DKIM -> Domain
-dkimDomain = L.unpack . dkimDomain0
+dkimDomain = dkimDomain0
 
 {-|
   Getting of the value of the \"s\" tag in DKIM-Signature:.
 -}
-dkimSelector :: DKIM -> String
-dkimSelector = L.unpack . dkimSelector0
+dkimSelector :: DKIM -> ByteString
+dkimSelector = dkimSelector0
