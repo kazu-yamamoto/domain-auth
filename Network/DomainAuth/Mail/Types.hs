@@ -28,6 +28,9 @@ data Mail = Mail {
   , mailBody :: Body
   } deriving (Eq,Show)
 
+isEmpty :: Body -> Bool
+isEmpty = (== empty)
+
 {-|
   Header type for parsed e-mail message.
 -}

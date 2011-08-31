@@ -27,6 +27,7 @@ module Network.DomainAuth.Mail (
   , fieldValueFolded
   , fieldValueUnfolded
   -- ** Functions to manipulate 'Body'
+  , isEmpty
   , fromBody
   , fromBodyWith
   , removeTrailingEmptyLine

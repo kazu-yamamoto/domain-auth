@@ -34,8 +34,8 @@ type Size = Int
 
 ----------------------------------------------------------------
 
-decode :: ByteString -> TLV
-decode bs = runGet der $ BL.fromChunks [bs]
+decode :: BL.ByteString -> TLV
+decode = runGet der
 
 ----------------------------------------------------------------
 

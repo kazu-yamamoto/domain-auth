@@ -2,32 +2,41 @@
 
 module Network.DomainAuth.Utils where
 
+import Blaze.ByteString.Builder
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as BS
-import Data.Char
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BS (lines)
+import Data.Monoid
+import Data.Word
 
-crlf :: ByteString
-crlf = "\r\n"
+crlf :: Builder
+crlf = fromByteString "\r\n"
 
-(+++) :: ByteString -> ByteString -> ByteString
-(+++) = BS.append
+(+++) :: Monoid a => a -> a -> a
+(+++) = mappend
 
-(!!!) :: ByteString -> Int -> Char
+empty :: Monoid a => a
+empty = mempty
+
+(!!!) :: ByteString -> Int -> Word8
 (!!!) = BS.index
 
 ----------------------------------------------------------------
 
-appendCRLF :: ByteString -> ByteString -> ByteString
+appendCRLF :: Builder -> Builder -> Builder
 appendCRLF x y = x +++ crlf +++ y
 
-appendCRLFWith :: (a -> ByteString) -> a -> ByteString -> ByteString
-appendCRLFWith modify x y = modify x +++ crlf +++ y
+appendCRLF' :: ByteString -> Builder -> Builder
+appendCRLF' x y = appendCRLF (fromByteString x) y
 
-concatCRLF :: [ByteString] -> ByteString
-concatCRLF = foldr appendCRLF ""
+appendCRLFWith :: (a -> ByteString) -> a -> Builder -> Builder
+appendCRLFWith modify x y = fromByteString (modify x) +++ crlf +++ y
 
-concatCRLFWith :: (a -> ByteString) -> [a] -> ByteString
-concatCRLFWith modify = foldr (appendCRLFWith modify) ""
+concatCRLF :: [ByteString] -> Builder
+concatCRLF = foldr appendCRLF' empty
+
+concatCRLFWith :: (a -> ByteString) -> [a] -> Builder
+concatCRLFWith modify = foldr (appendCRLFWith modify) empty
 
 ----------------------------------------------------------------
 
@@ -83,18 +92,45 @@ hasTrailingWSP bs
 chop :: ByteString -> ByteString
 chop "" = ""
 chop bs
-  | BS.last bs == '\r' = BS.init bs
-  | otherwise         = bs
+  | BS.last bs == 13 = BS.init bs -- 13 == '\r'
+  | otherwise        = bs
 
 blines :: ByteString -> [ByteString]
 blines = map chop . BS.lines
 
 ----------------------------------------------------------------
 
-break' :: Char -> ByteString -> (ByteString,ByteString)
+break' :: Word8 -> ByteString -> (ByteString,ByteString)
 break' c bs = (f,s)
   where
     (f,s') = BS.break (==c) bs
     s = if s' == ""
         then ""
         else BS.tail s'
+
+----------------------------------------------------------------
+
+isAlphaNum, isUpper, isLower, isDigit, isSpace :: Word8 -> Bool
+isAlphaNum c = isUpper c || isLower c || isDigit c
+isDigit c = 48 <= c && c <= 57
+isUpper c = 65 <= c && c <= 90
+isLower c = 97 <= c && c <= 122
+isSpace c = c == cSP || c == cTB || c == cLF || c == cCR
+
+cCR, cLF, cSP, cTB :: Word8
+cCR = 13
+cLF = 10
+cSP = 32
+cTB =  9
+
+cPlus,cSlash,cEqual,cSmallA,cA,cZero :: Word8
+cPlus  = 43
+cSlash = 47
+cEqual = 61
+cSmallA = 97
+cA = 65
+cZero = 48
+
+cColon,cSemiColon :: Word8
+cColon = 58
+cSemiColon = 59

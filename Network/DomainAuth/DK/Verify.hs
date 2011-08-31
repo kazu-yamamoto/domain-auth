@@ -4,9 +4,9 @@ module Network.DomainAuth.DK.Verify (
     verifyDK, prepareDK
   ) where
 
+import Blaze.ByteString.Builder
 import Codec.Crypto.RSA
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map as M
 import Network.DomainAuth.DK.Types
 import Network.DomainAuth.Mail
@@ -15,16 +15,19 @@ import Network.DomainAuth.Utils
 
 ----------------------------------------------------------------
 
-prepareDK :: DK -> Mail -> ByteString
+prepareDK :: DK -> Mail -> Builder
 prepareDK dk mail = cmail
   where
     header' = canonDkHeader dk (mailHeader mail)
     body'   = canonDkBody (dkCanonAlgo dk) (mailBody mail)
-    cmail   = if body' == "" then header' else header' `appendCRLF` body'
+    cmail   = if isEmpty (mailBody mail) then
+                  header'
+              else
+                  header' `appendCRLF` body'
 
 ----------------------------------------------------------------
 
-canonDkHeader :: DK -> Header -> ByteString
+canonDkHeader :: DK -> Header -> Builder
 canonDkHeader dk hdr = concatCRLFWith (canonDkField calgo) flds
   where
     calgo = dkCanonAlgo dk
@@ -43,7 +46,7 @@ prepareDkHeader (Just hFields) hdr = filter isInHTag $ fieldsAfter dkFieldKey hd
 
 ----------------------------------------------------------------
 
-canonDkBody :: DkCanonAlgo -> Body -> ByteString
+canonDkBody :: DkCanonAlgo -> Body -> Builder
 canonDkBody DK_SIMPLE = fromBody . removeTrailingEmptyLine
 canonDkBody DK_NOFWS  = fromBodyWith removeFWS . removeTrailingEmptyLine
 
@@ -52,5 +55,5 @@ canonDkBody DK_NOFWS  = fromBodyWith removeFWS . removeTrailingEmptyLine
 verifyDK :: Mail -> DK -> PublicKey -> Bool
 verifyDK mail dk pub = rsassa_pkcs1_v1_5_verify ha_SHA1 pub cmail sig
   where
-    sig = BL.fromChunks [B.decode (dkSignature dk)]
-    cmail = BL.fromChunks [prepareDK dk mail]
+    sig = B.decode . dkSignature $ dk
+    cmail = toLazyByteString (prepareDK dk mail)

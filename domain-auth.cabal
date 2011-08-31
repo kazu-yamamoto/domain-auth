@@ -46,7 +46,7 @@ library
                         Network.DomainAuth.SPF.Types
   Build-Depends:        base >= 4 && < 5, appar, dns, iproute,
                         network, bytestring, RSA, binary,
-                        containers, SHA
+                        containers, SHA, blaze-builder
 Source-Repository head
   Type:                 git
   Location:             git://github.com/kazu-yamamoto/domain-auth.git

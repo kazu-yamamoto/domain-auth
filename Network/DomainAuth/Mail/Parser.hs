@@ -3,8 +3,8 @@
 module Network.DomainAuth.Mail.Parser where
 
 import Control.Applicative
-import qualified Data.ByteString.Char8 as BS
-import Data.Char
+import qualified Data.ByteString as BS
+import Data.Word
 import Network.DomainAuth.Mail.Types
 import Network.DomainAuth.Mail.XMail
 import Network.DomainAuth.Utils
@@ -39,7 +39,7 @@ splitHeaderBody bs = case mcnt of
     dropSep bdy
       | len == 0 = ""
       | len == 1 = ""
-      | otherwise = if b1 == '\r' then bdy3 else bdy2
+      | otherwise = if b1 == cCR then bdy3 else bdy2
       where
         len = BS.length bdy
         b1 = BS.head bdy
@@ -49,10 +49,10 @@ splitHeaderBody bs = case mcnt of
 findEOH :: RawMail -> Int -> Maybe Int
 findEOH "" _ = Nothing
 findEOH bs cnt
-  | b0 == '\n' && bs1 /= "" && b1 == '\n' = Just (cnt + 1)
-  | b0 == '\n' && bs1 /= "" && b1 == '\r'
-               && bs2 /= "" && b2 == '\n' = Just (cnt + 1)
-  | otherwise                             = findEOH bs1 (cnt + 1)
+  | b0 == cLF && bs1 /= "" && b1 == cLF = Just (cnt + 1)
+  | b0 == cLF && bs1 /= "" && b1 == cCR
+              && bs2 /= "" && b2 == cLF = Just (cnt + 1)
+  | otherwise                           = findEOH bs1 (cnt + 1)
   where
     b0  = BS.head bs
     bs1 = BS.tail bs
@@ -66,14 +66,14 @@ splitFields :: RawHeader -> [RawField]
 splitFields "" = []
 splitFields bs = fld : splitFields bs''
   where
-    -- split before '\n' for efficiency
+    -- split before cLF for efficiency
     (fld,bs') = BS.splitAt (findFieldEnd bs 0 - 1) bs
     bs'' = BS.tail bs'
 
 findFieldEnd :: RawMail -> Int -> Int
 findFieldEnd bs cnt
     | bs == ""   = cnt
-    | b  == '\n' = begOfLine bs' (cnt + 1)
+    | b  == cLF = begOfLine bs' (cnt + 1)
     | otherwise  = findFieldEnd bs' (cnt + 1)
   where
     b   = BS.head bs
@@ -88,17 +88,17 @@ begOfLine bs cnt
     b   = BS.head bs
     bs' = BS.tail bs
 
-isContinued :: Char -> Bool
-isContinued c = c `elem` " \t"
+isContinued :: Word8 -> Bool
+isContinued = isSpace
 
 ----------------------------------------------------------------
 
 parseField :: RawField -> (RawFieldKey,RawFieldValue)
 parseField bs = (k,v')
   where
-    (k,v) = break' ':' bs
+    (k,v) = break' cColon bs
     -- Sendmail drops ' ' after ':'.
-    v' = if v /= "" && BS.head v == ' '
+    v' = if v /= "" && BS.head v == cSP
          then BS.tail v
          else v
 
@@ -112,5 +112,5 @@ parseTaggedValue :: RawFieldValue -> [(BS.ByteString,BS.ByteString)]
 parseTaggedValue xs = vss
   where
     v = BS.filter (not.isSpace) xs
-    vs = filter (/= "") $ BS.split ';' v
-    vss = map (break' '=') vs
+    vs = filter (/= "") $ BS.split cSemiColon v
+    vss = map (break' cEqual) vs

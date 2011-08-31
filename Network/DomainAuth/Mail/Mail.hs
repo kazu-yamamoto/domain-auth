@@ -2,13 +2,15 @@
 
 module Network.DomainAuth.Mail.Mail where
 
+import Blaze.ByteString.Builder
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Foldable as F (foldr)
 import Data.List
 import Data.Sequence (Seq, viewr, ViewR(..), empty)
 import Network.DomainAuth.Mail.Types
-import Network.DomainAuth.Utils
+import Network.DomainAuth.Utils hiding (empty)
+import qualified Network.DomainAuth.Utils as B (empty)
 
 ----------------------------------------------------------------
 
@@ -58,7 +60,7 @@ isNotKeyOf key fld = fieldSearchKey fld /= key
 
 -- | Obtaining folded (raw) field value.
 fieldValueFolded :: Field -> RawFieldValue
-fieldValueFolded = concatCRLF . fieldValue
+fieldValueFolded = toByteString . concatCRLF . fieldValue
 
 -- | Obtaining unfolded (removing CRLF) field value.
 fieldValueUnfolded :: Field -> RawFieldValue
@@ -67,12 +69,12 @@ fieldValueUnfolded = BS.concat . fieldValue
 ----------------------------------------------------------------
 
 -- | Obtaining body.
-fromBody :: Body -> ByteString
+fromBody :: Body -> Builder
 fromBody = fromBodyWith id
 
 -- | Obtaining body with a canonicalization function.
-fromBodyWith :: (ByteString -> ByteString) -> Body -> ByteString
-fromBodyWith modify = F.foldr (appendCRLFWith modify) ""
+fromBodyWith :: (ByteString -> ByteString) -> Body -> Builder
+fromBodyWith modify = F.foldr (appendCRLFWith modify) B.empty
 
 -- | Removing trailing empty lines.
 removeTrailingEmptyLine :: Body -> Body
