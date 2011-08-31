@@ -27,7 +27,7 @@ appendCRLF :: Builder -> Builder -> Builder
 appendCRLF x y = x +++ crlf +++ y
 
 appendCRLF' :: ByteString -> Builder -> Builder
-appendCRLF' x y = appendCRLF (fromByteString x) y
+appendCRLF' x = appendCRLF (fromByteString x)
 
 appendCRLFWith :: (a -> ByteString) -> a -> Builder -> Builder
 appendCRLFWith modify x y = fromByteString (modify x) +++ crlf +++ y
@@ -115,7 +115,7 @@ isAlphaNum c = isUpper c || isLower c || isDigit c
 isDigit c = 48 <= c && c <= 57
 isUpper c = 65 <= c && c <= 90
 isLower c = 97 <= c && c <= 122
-isSpace c = c == cSP || c == cTB || c == cLF || c == cCR
+isSpace c = c `elem` [cSP,cTB,cLF,cCR]
 
 cCR, cLF, cSP, cTB :: Word8
 cCR = 13
