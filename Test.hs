@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 
 module Test where
 
@@ -7,134 +7,65 @@ import Data.IP
 import Network.DNS as DNS hiding (answer)
 import Network.DomainAuth
 import Network.DomainAuth.DK.Types
-import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.DKIM.Btag
+import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.PRD.Lexer
 import Network.DomainAuth.Pubkey.RSAPub
 import Network.DomainAuth.Utils
-import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.HUnit
-import Test.HUnit hiding (Test)
+import Test.Framework.TH
+import Test.HUnit
 import Text.Appar.String
-
-tests :: [Test]
-tests = [
-    testGroup "SPF" [
-         testCase "ipv4" test_ipv4
-       , testCase "ipv4 2" test_ipv4_2
-       , testCase "ipv6" test_ipv6
-       , testCase "redirect" test_redirect
-       , testCase "redirect2" test_redirect2
-       , testCase "limit" test_limit
-       , testCase "limit2" test_limit2
-       , testCase "limit3" test_limit3
-       ]
-  , testGroup "Domain" [
-         testCase "domain 1" test_domain1
-       , testCase "domain 2" test_domain2
-       , testCase "domain 3" test_domain3
-       , testCase "domain 4" test_domain4
-       ]
-  , testGroup "PRD" [
-         testCase "from" test_from
-       , testCase "prd1" test_prd1
-       , testCase "prd2" test_prd2
-       , testCase "prd3" test_prd3
-       , testCase "prd4" test_prd4
-       , testCase "prd5" test_prd5
-       , testCase "prd6" test_prd5
-       , testCase "prd7" test_prd7
-       , testCase "prd8" test_prd8
-       , testCase "prd9" test_prd9
-       ]
-  , testGroup "Lexer" [
-         testCase "structured 1" test_structured1
-       , testCase "structured 2" test_structured2
-       , testCase "structured 3" test_structured3
-       , testCase "structured 4" test_structured4
-       ]
-  , testGroup "TaggedValue" [
-         testCase "parse" test_parse
-       , testCase "parse2" test_parse2
-       ]
-  , testGroup "Public Key" [
-         testCase "lookup yahoo" test_lookup_yahoo
-       , testCase "lookup gmail" test_lookup_gmail
-       , testCase "lookup iij" test_lookup_iij
-       ]
-  , testGroup "Parser" [
-         testCase "dk field" test_dk_field
-       , testCase "dkim field" test_dkim_field
-       , testCase "dkim field2" test_dkim_field2
-       ]
-  , testGroup "DK" [
-         testCase "dk yahoo" test_dk_yahoo
-       , testCase "dk gmail" test_dk_gmail
-       ]
-  , testGroup "DKIM" [
-         testCase "dkim iij" test_dkim_iij
-       , testCase "dkim gmail" test_dkim_gmail
-       , testCase "dkim nifty" test_dkim_nifty
-       , testCase "dkim iij4u" test_dkim_iij4u
-       ]
-  , testGroup "Mail" [
-         testCase "dk yahoo" test_mail
-       , testCase "dk yahoo" test_mail2
-       , testCase "dk yahoo" test_mail3
-       ]
-  , testGroup "DKIM canon" [
-         testCase "dkim deleteB" test_dkim_btag
-       ]
-  , testGroup "Utils" [
-         testCase "blines" test_blines
-       , testCase "blines2" test_blines2
-       ]
-  ]
 
 ----------------------------------------------------------------
 
-test_ipv4 :: Assertion
-test_ipv4 = do
+main :: IO ()
+main = $(defaultMainGenerator)
+
+----------------------------------------------------------------
+
+case_ipv4 :: Assertion
+case_ipv4 = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
         runSPF defaultLimit resolver "mew.org" ip >>= (@?= DAPass)
   where
     ip = IPv4 . read $ "202.232.15.101"
 
-test_ipv4_2 :: Assertion
-test_ipv4_2 = do
+case_ipv4_2 :: Assertion
+case_ipv4_2 = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
         runSPF defaultLimit resolver "exapmle.org" ip >>= (@?= DATempError)
   where
     ip = IPv4 . read $ "192.0.2.1"
 
-test_ipv6 :: Assertion
-test_ipv6 = do
+case_ipv6 :: Assertion
+case_ipv6 = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
         runSPF defaultLimit resolver "mew.org" ip >>= (@?= DAPass)
   where
     ip = IPv6 . read $ "2001:240:11e:c00::101"
 
-test_redirect :: Assertion
-test_redirect = do
+case_redirect :: Assertion
+case_redirect = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
         runSPF defaultLimit resolver "gmail.com" ip >>= (@?= DAPass)
   where
     ip = IPv4 . read $ "72.14.192.1"
 
-test_redirect2 :: Assertion
-test_redirect2 = do
+case_redirect2 :: Assertion
+case_redirect2 = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
         runSPF defaultLimit resolver "gmail.com" ip >>= (@?= DANeutral)
   where
     ip = IPv4 . read $ "72.14.128.1"
 
-test_limit :: Assertion
-test_limit = do
+case_limit :: Assertion
+case_limit = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
         runSPF lim resolver "gmail.com" ip >>= (@?= DAPermError)
@@ -142,16 +73,16 @@ test_limit = do
     ip = IPv4 . read $ "72.14.192.1"
     lim = defaultLimit { ipv4_masklen = 24 }
 
-test_limit2 :: Assertion
-test_limit2 = do
+case_limit2 :: Assertion
+case_limit2 = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
         runSPF defaultLimit resolver "nifty.com" ip >>= (@?= DAPass)
   where
     ip = IPv4 . read $ "202.248.236.1"
 
-test_limit3 :: Assertion
-test_limit3 = do
+case_limit3 :: Assertion
+case_limit3 = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
         runSPF lim resolver "nifty.com" ip >>= (@?= DAPass)
@@ -161,17 +92,17 @@ test_limit3 = do
 
 ----------------------------------------------------------------
 
-test_domain1 :: Assertion
-test_domain1 = extractDomain "Alice Brown <alice.brown@example.com>" @?= Just "example.com"
+case_domain1 :: Assertion
+case_domain1 = extractDomain "Alice Brown <alice.brown@example.com>" @?= Just "example.com"
 
-test_domain2 :: Assertion
-test_domain2 = extractDomain "\"Alice . Brown\" <alice.brown@example.com> (Nickname here)" @?= Just "example.com"
+case_domain2 :: Assertion
+case_domain2 = extractDomain "\"Alice . Brown\" <alice.brown@example.com> (Nickname here)" @?= Just "example.com"
 
-test_domain3 :: Assertion
-test_domain3 = extractDomain "alice.brown@example.com" @?= Just "example.com"
+case_domain3 :: Assertion
+case_domain3 = extractDomain "alice.brown@example.com" @?= Just "example.com"
 
-test_domain4 :: Assertion
-test_domain4 = extractDomain "Alice Brown <example.com>" @?= Nothing
+case_domain4 :: Assertion
+case_domain4 = extractDomain "Alice Brown <example.com>" @?= Nothing
 
 ----------------------------------------------------------------
 
@@ -181,39 +112,39 @@ maddr2 = "bob@bob.example.jp"
 maddr3 = "chris@chris.example.jp"
 maddr4 = "dave@dave.example.jp"
 
-test_from :: Assertion
-test_from = decideFrom (pushPRD "from" maddr1 initialPRD) @?= answer
+case_from :: Assertion
+case_from = decideFrom (pushPRD "from" maddr1 initialPRD) @?= answer
  where
    answer = Just "alice.example.jp"
 
-test_prd1 :: Assertion
-test_prd1 = decidePRD (pushPRD "from" maddr1 initialPRD) @?= answer
+case_prd1 :: Assertion
+case_prd1 = decidePRD (pushPRD "from" maddr1 initialPRD) @?= answer
  where
    answer = Just "alice.example.jp"
 
-test_prd2 :: Assertion
-test_prd2 = decidePRD (pushPRD "from" maddr1
+case_prd2 :: Assertion
+case_prd2 = decidePRD (pushPRD "from" maddr1
                      $ pushPRD "from" maddr1 initialPRD) @?= answer
  where
    answer = Nothing
 
-test_prd3 :: Assertion
-test_prd3 = decidePRD (pushPRD "sender" maddr2
+case_prd3 :: Assertion
+case_prd3 = decidePRD (pushPRD "sender" maddr2
                      $ pushPRD "from" maddr1
                      $ pushPRD "from" maddr1 initialPRD) @?= answer
  where
    answer = Just "bob.example.jp"
 
-test_prd4 :: Assertion
-test_prd4 = decidePRD (pushPRD "sender" maddr2
+case_prd4 :: Assertion
+case_prd4 = decidePRD (pushPRD "sender" maddr2
                      $ pushPRD "sender" maddr2
                      $ pushPRD "from" maddr1
                      $ pushPRD "from" maddr1 initialPRD) @?= answer
  where
    answer = Nothing
 
-test_prd5 :: Assertion
-test_prd5 = decidePRD (pushPRD "resent-from" maddr3
+case_prd5 :: Assertion
+case_prd5 = decidePRD (pushPRD "resent-from" maddr3
                      $ pushPRD "sender" maddr2
                      $ pushPRD "sender" maddr2
                      $ pushPRD "from" maddr1
@@ -221,8 +152,8 @@ test_prd5 = decidePRD (pushPRD "resent-from" maddr3
  where
    answer = Just "chris.example.jp"
 
-test_prd6 :: Assertion
-test_prd6 = decidePRD (pushPRD "resent-sender" maddr4
+case_prd6 :: Assertion
+case_prd6 = decidePRD (pushPRD "resent-sender" maddr4
                      $ pushPRD "resent-from" maddr3
                      $ pushPRD "sender" maddr2
                      $ pushPRD "sender" maddr2
@@ -231,8 +162,8 @@ test_prd6 = decidePRD (pushPRD "resent-sender" maddr4
  where
    answer = Just "dave.example.jp"
 
-test_prd7 :: Assertion
-test_prd7 = decidePRD (pushPRD "resent-sender" maddr4
+case_prd7 :: Assertion
+case_prd7 = decidePRD (pushPRD "resent-sender" maddr4
                      $ pushPRD "resent-from" maddr3
                      $ pushPRD "sender" maddr2
                      $ pushPRD "received" "dummy"
@@ -240,8 +171,8 @@ test_prd7 = decidePRD (pushPRD "resent-sender" maddr4
  where
    answer = Just "dave.example.jp"
 
-test_prd8 :: Assertion
-test_prd8 = decidePRD (pushPRD "resent-sender" maddr4
+case_prd8 :: Assertion
+case_prd8 = decidePRD (pushPRD "resent-sender" maddr4
                      $ pushPRD "received" "dummy"
                      $ pushPRD "resent-from" maddr3
                      $ pushPRD "sender" maddr2
@@ -249,8 +180,8 @@ test_prd8 = decidePRD (pushPRD "resent-sender" maddr4
   where
    answer = Just "chris.example.jp"
 
-test_prd9 :: Assertion
-test_prd9 = decidePRD (pushPRD "received" "dummy"
+case_prd9 :: Assertion
+case_prd9 = decidePRD (pushPRD "received" "dummy"
                      $ pushPRD "resent-sender" maddr4
                      $ pushPRD "resent-from" maddr3
                      $ pushPRD "sender" maddr2
@@ -260,64 +191,64 @@ test_prd9 = decidePRD (pushPRD "received" "dummy"
 
 ----------------------------------------------------------------
 
-test_structured1 :: Assertion
-test_structured1 = parse structured inp @?= out
+case_structured1 :: Assertion
+case_structured1 = parse structured inp @?= out
   where
     inp = "From: Kazu Yamamoto (=?iso-2022-jp?B?GyRCOzNLXE9CSScbKEI=?=)\n <kazu@example.net>"
     out = Just ["From",":","Kazu","Yamamoto","<","kazu","@","example",".","net",">"]
 
-test_structured2 :: Assertion
-test_structured2 = parse structured inp @?= out
+case_structured2 :: Assertion
+case_structured2 = parse structured inp @?= out
   where
     inp = "To:A Group(Some people)\n      :Chris Jones <c@(Chris's host.)public.example>,\n          joe@example.org,\n   John <jdoe@one.test> (my dear friend); (the end of the group)\n"
     out = Just ["To",":","A","Group",":","Chris","Jones","<","c","@","public",".","example",">",",","joe","@","example",".","org",",","John","<","jdoe","@","one",".","test",">",";"]
 
-test_structured3 :: Assertion
-test_structured3 = parse structured inp @?= out
+case_structured3 :: Assertion
+case_structured3 = parse structured inp @?= out
   where
     inp = "Date: Thu,\n      13\n        Feb\n          1969\n      23:32\n               -0330 (Newfoundland Time)\n"
     out = Just ["Date",":","Thu",",","13","Feb","1969","23",":","32","-0330"]
 
-test_structured4 :: Assertion
-test_structured4 = parse structured inp @?= out
+case_structured4 :: Assertion
+case_structured4 = parse structured inp @?= out
   where
     inp = "From: Pete(A nice \\) chap) <pete(his account)@silly.test(his host)>\n"
     out = Just ["From",":","Pete","<","pete","@","silly",".","test",">"]
 
 ----------------------------------------------------------------
 
-test_parse :: Assertion
-test_parse = parseTaggedValue input @?= output
+case_parse :: Assertion
+case_parse = parseTaggedValue input @?= output
   where
     input = " k = rsa ; p= MIGfMA0G; n=A 1024 bit key;"
     output = [("k","rsa"),("p","MIGfMA0G"),("n","A1024bitkey")]
 
-test_parse2 :: Assertion
-test_parse2 = parseTaggedValue input @?= output
+case_parse2 :: Assertion
+case_parse2 = parseTaggedValue input @?= output
   where
     input = " k = \nrsa ;\n p= MIGfMA0G;\n n=A 1024 bit key"
     output = [("k","rsa"),("p","MIGfMA0G"),("n","A1024bitkey")]
 
 ----------------------------------------------------------------
 
-test_lookup_yahoo :: Assertion
-test_lookup_yahoo = do
+case_lookup_yahoo :: Assertion
+case_lookup_yahoo = do
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     pub0 <- readFile "data/yahoo.pub"
     DNS.withResolver rs $ \resolver -> do
         Just pub1 <- lookupPublicKey' resolver "dk200510._domainkey.yahoo.co.jp"
         BS.unpack pub1 @?= init pub0 -- removing "\n"
 
-test_lookup_gmail :: Assertion
-test_lookup_gmail = do
+case_lookup_gmail :: Assertion
+case_lookup_gmail = do
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     pub0 <- readFile "data/gmail.pub"
     DNS.withResolver rs $ \resolver -> do
         Just pub1 <- lookupPublicKey' resolver "gamma._domainkey.gmail.com"
         BS.unpack pub1 @?= init pub0 -- removing "\n"
 
-test_lookup_iij :: Assertion
-test_lookup_iij = do
+case_lookup_iij :: Assertion
+case_lookup_iij = do
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     pub0 <- readFile "data/iij.pub"
     DNS.withResolver rs $ \resolver -> do
@@ -326,36 +257,36 @@ test_lookup_iij = do
 
 ----------------------------------------------------------------
 
-test_dk_field :: Assertion
-test_dk_field = parseDK inp @?= out
+case_dk_field :: Assertion
+case_dk_field = parseDK inp @?= out
   where
     inp = "a=rsa-sha1; s=brisbane; d=football.example.com;\n  c=simple; q=dns;\n  b=dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZ\n    VoG4ZHRNiYzR;"
     out = Just DK {dkAlgorithm = DK_RSA_SHA1, dkSignature = "dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZVoG4ZHRNiYzR", dkCanonAlgo = DK_SIMPLE, dkDomain0 = "football.example.com", dkFields = Nothing, dkSelector0 = "brisbane"}
 
-test_dkim_field :: Assertion
-test_dkim_field = parseDKIM inp @?= out
+case_dkim_field :: Assertion
+case_dkim_field = parseDKIM inp @?= out
   where
    inp = "v=1; a=rsa-sha256; s=brisbane; d=example.com;\n         c=relaxed/simple; q=dns/txt; i=joe@football.example.com;\n         h=Received : From : To : Subject : Date : Message-ID;\n         bh=2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=;\n         b=AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB\n           4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHut\n           KVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV\n           4bmp/YzhwvcubU4=;"
    out = Just DKIM {dkimVersion = "1", dkimSigAlgo = RSA_SHA256, dkimSignature = "AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHutKVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV4bmp/YzhwvcubU4=", dkimBodyHash = "2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=", dkimHeaderCanon = DKIM_RELAXED, dkimBodyCanon = DKIM_SIMPLE, dkimDomain0 = "example.com", dkimFields = ["received","from","to","subject","date","message-id"], dkimLength = Nothing, dkimSelector0 = "brisbane"}
 
-test_dkim_field2 :: Assertion
-test_dkim_field2 = parseDKIM inp @?= out
+case_dkim_field2 :: Assertion
+case_dkim_field2 = parseDKIM inp @?= out
   where
    inp = "v=1; a=rsa-sha256; s=brisbane; d=example.com;\n         q=dns/txt; i=joe@football.example.com;\n         h=Received : From : To : Subject : Date : Message-ID;\n         bh=2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=;\n         b=AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB\n           4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHut\n           KVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV\n           4bmp/YzhwvcubU4=;"
    out = Just DKIM {dkimVersion = "1", dkimSigAlgo = RSA_SHA256, dkimSignature = "AuUoFEfDxTDkHlLXSZEpZj79LICEps6eda7W3deTVFOk4yAUoqOB4nujc7YopdG5dWLSdNg6xNAZpOPr+kHxt1IrE+NahM6L/LbvaHutKVdkLLkpVaVVQPzeRDI009SO2Il5Lu7rDNH6mZckBdrIx0orEtZV4bmp/YzhwvcubU4=", dkimBodyHash = "2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=", dkimHeaderCanon = DKIM_SIMPLE, dkimBodyCanon = DKIM_SIMPLE, dkimDomain0 = "example.com", dkimFields = ["received","from","to","subject","date","message-id"], dkimLength = Nothing, dkimSelector0 = "brisbane"}
 
 ----------------------------------------------------------------
 
-test_dk_yahoo :: Assertion
-test_dk_yahoo = do
+case_dk_yahoo :: Assertion
+case_dk_yahoo = do
     mail <- readMail "data/yahoo"
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     DNS.withResolver rs $ \resolver -> do
         res <- runDK resolver mail
         res @?= DAPass
 
-test_dk_gmail :: Assertion
-test_dk_gmail = do
+case_dk_gmail :: Assertion
+case_dk_gmail = do
     mail <- readMail "data/gmail"
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     DNS.withResolver rs $ \resolver -> do
@@ -364,32 +295,32 @@ test_dk_gmail = do
 
 ----------------------------------------------------------------
 
-test_dkim_iij :: Assertion
-test_dkim_iij = do
+case_dkim_iij :: Assertion
+case_dkim_iij = do
     mail <- readMail "data/iij"
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     DNS.withResolver rs $ \resolver -> do
         res <- runDKIM resolver mail
         res @?= DAPass
 
-test_dkim_gmail :: Assertion
-test_dkim_gmail = do
+case_dkim_gmail :: Assertion
+case_dkim_gmail = do
     mail <- readMail "data/gmail"
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     DNS.withResolver rs $ \resolver -> do
         res <- runDKIM resolver mail
         res @?= DAPass
 
-test_dkim_nifty :: Assertion
-test_dkim_nifty = do
+case_dkim_nifty :: Assertion
+case_dkim_nifty = do
     mail <- readMail "data/nifty"
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     DNS.withResolver rs $ \resolver -> do
         res <- runDKIM resolver mail
         res @?= DAPass
 
-test_dkim_iij4u :: Assertion
-test_dkim_iij4u = do
+case_dkim_iij4u :: Assertion
+case_dkim_iij4u = do
     mail <- readMail "data/iij4u"
     rs <- DNS.makeResolvSeed DNS.defaultResolvConf
     DNS.withResolver rs $ \resolver -> do
@@ -398,8 +329,8 @@ test_dkim_iij4u = do
 
 ----------------------------------------------------------------
 
-test_mail :: Assertion
-test_mail = getMail inp @?= out
+case_mail :: Assertion
+case_mail = getMail inp @?= out
   where
     inp = BS.pack "from: val\nto: val\n\nbody"
     out = finalizeMail
@@ -408,8 +339,8 @@ test_mail = getMail inp @?= out
         $ pushField "from" "val"
         initialXMail
 
-test_mail2 :: Assertion
-test_mail2 = getMail inp @?= out
+case_mail2 :: Assertion
+case_mail2 = getMail inp @?= out
   where
     inp = BS.pack "from: val\tval\nto: val\n\nbody"
     out = finalizeMail
@@ -418,8 +349,8 @@ test_mail2 = getMail inp @?= out
         $ pushField "from" "val\tval"
         initialXMail
 
-test_mail3 :: Assertion
-test_mail3 = getMail inp @?= out
+case_mail3 :: Assertion
+case_mail3 = getMail inp @?= out
   where
     inp = BS.pack "from: val\nto: val\n"
     out = finalizeMail
@@ -430,27 +361,24 @@ test_mail3 = getMail inp @?= out
 
 ----------------------------------------------------------------
 
-test_dkim_btag :: Assertion
-test_dkim_btag = removeBtagValue inp @?= out
+case_dkim_btag :: Assertion
+case_dkim_btag = removeBtagValue inp @?= out
   where
     inp = "DKIM-Signature: a=rsa-sha256; d=example.net; s=brisbane;\n   c=simple; q=dns/txt; i=@eng.example.net;\n   t=1117574938; x=1118006938;\n   h=from:to:subject:date;\n   z=From:foo@eng.example.net|To:joe@example.com|\n     Subject:demo=20run|Date:July=205,=202005=203:44:08=20PM=20-0700;\n   bh=MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=;\n   b=dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZ\n            VoG4ZHRNiYzR;\n"
     out = "DKIM-Signature: a=rsa-sha256; d=example.net; s=brisbane;\n   c=simple; q=dns/txt; i=@eng.example.net;\n   t=1117574938; x=1118006938;\n   h=from:to:subject:date;\n   z=From:foo@eng.example.net|To:joe@example.com|\n     Subject:demo=20run|Date:July=205,=202005=203:44:08=20PM=20-0700;\n   bh=MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=;\n   b=;\n"
 
 ----------------------------------------------------------------
 
-test_blines :: Assertion
-test_blines = blines inp @?= out
+case_blines :: Assertion
+case_blines = blines inp @?= out
   where
     inp = "foo\r\n\r\nbar\r\nbaz"
     out = ["foo","","bar","baz"]
 
-test_blines2 :: Assertion
-test_blines2 = blines inp @?= out
+case_blines2 :: Assertion
+case_blines2 = blines inp @?= out
   where
     inp = "foo\r\n"
     out = ["foo"]
 
 ----------------------------------------------------------------
-
-main :: Assertion
-main = defaultMain tests
