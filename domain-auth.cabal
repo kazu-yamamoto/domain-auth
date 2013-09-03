@@ -49,7 +49,7 @@ library
                       , blaze-builder
                       , bytestring
                       , containers
-                      , dns
+                      , dns == 0.3.*
                       , iproute
                       , network
 Source-Repository head
