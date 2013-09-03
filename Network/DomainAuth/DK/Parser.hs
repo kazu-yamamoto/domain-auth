@@ -9,7 +9,6 @@ import qualified Data.Map as M
 import Data.Maybe
 import Network.DomainAuth.DK.Types
 import Network.DomainAuth.Mail
-import Prelude hiding (catch)
 
 {-|
   Parsing DomainKey-Signature:.

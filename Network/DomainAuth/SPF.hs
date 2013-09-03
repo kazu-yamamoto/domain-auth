@@ -8,11 +8,12 @@ module Network.DomainAuth.SPF (
   , defaultLimit
   ) where
 
+import Control.Exception as E
 import Data.IP
 import Network.DNS (Domain, Resolver)
-import Network.DomainAuth.Types
 import Network.DomainAuth.SPF.Eval
 import Network.DomainAuth.SPF.Resolver
+import Network.DomainAuth.Types
 import System.IO.Error
 
 {-|
@@ -24,7 +25,7 @@ import System.IO.Error
 -}
 runSPF :: Limit -> Resolver -> Domain -> IP -> IO DAResult
 runSPF lim resolver dom ip =
-    (resolveSPF resolver dom ip >>= evalSPF lim ip) `catch` spfErrorHandle
+    (resolveSPF resolver dom ip >>= evalSPF lim ip) `E.catch` spfErrorHandle
 
 spfErrorHandle :: IOError -> IO DAResult
 spfErrorHandle e = case ioeGetErrorString e of

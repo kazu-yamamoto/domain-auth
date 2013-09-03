@@ -8,7 +8,6 @@ import qualified Data.ByteString.Char8 as BS
 import Data.Maybe
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
-import Prelude hiding (catch)
 
 {-|
   Parsing DKIM-Signature:.
