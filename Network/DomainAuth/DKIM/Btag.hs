@@ -1,5 +1,6 @@
 module Network.DomainAuth.DKIM.Btag where
 
+import Control.Monad
 import Data.ByteString.Char8
 import Data.Maybe
 import Text.Appar.ByteString
@@ -18,6 +19,6 @@ btag = do
     b <- string "b"
     w <- many $ oneOf " \t\r\n"
     e <- string "="
-    some $ noneOf ";"
+    void . some $ noneOf ";"
     s <- option "" (string ";")
     return $ b ++ w ++ e ++ s
