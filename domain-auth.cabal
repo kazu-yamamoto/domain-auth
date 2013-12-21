@@ -49,7 +49,8 @@ library
                       , blaze-builder
                       , bytestring
                       , containers
-                      , dns == 0.3.*
+                      , crypto-pubkey-types
+                      , dns >= 1.0
                       , iproute
                       , network
 Source-Repository head

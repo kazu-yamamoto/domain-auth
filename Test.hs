@@ -13,7 +13,7 @@ import Network.DomainAuth.PRD.Lexer
 import Network.DomainAuth.Pubkey.RSAPub
 import Network.DomainAuth.Utils
 import Test.Framework.Providers.HUnit
-import Test.Framework.TH
+import Test.Framework.TH.Prime
 import Test.HUnit
 import Text.Appar.String
 

@@ -4,6 +4,7 @@ module Network.DomainAuth.Pubkey.RSAPub where
 
 import Codec.Crypto.RSA
 import Control.Applicative
+import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS (foldl', dropWhile, length, tail)
 import qualified Data.ByteString.Char8 as BS ()
@@ -20,9 +21,13 @@ lookupPublicKey resolver domain = decode <$> lookupPublicKey' resolver domain
     decode = (>>= return . decodeRSAPublicyKey)
 
 lookupPublicKey' :: DNS.Resolver -> Domain -> IO (Maybe ByteString)
-lookupPublicKey' resolver domain = extractPub <$> DNS.lookupTXT resolver domain
+lookupPublicKey' resolver domain = do
+    ex <- DNS.lookupTXT resolver domain
+    case ex of
+        Left  _ -> return Nothing
+        Right x -> return $ extractPub (Just x) -- FIXME
 
-extractPub :: Maybe [ByteString] -> Maybe ByteString
+extractPub :: Maybe [ByteString] -> Maybe ByteString  -- FIXME
 extractPub = (>>= lookup "p" . parseTaggedValue . head)
 
 decodeRSAPublicyKey :: ByteString -> PublicKey

@@ -24,8 +24,12 @@ resolveSPF resolver dom ip = do
     let is = filterSPFWithIP ip (fromJust jrs)
     return $ map (toSpfSeq resolver dom ip) is
   where
-    getSPFRR jrc = let ts = filter ("v=spf1" `BS.isPrefixOf`) (fromJust jrc)
-                   in if null ts then "" else head ts
+    getSPFRR (Left _) = error "getSPRRR"
+    getSPFRR (Right rc)
+      | null ts   = ""
+      | otherwise = head ts
+      where
+        ts = filter ("v=spf1" `BS.isPrefixOf`) rc
     checkSyntax rs estr = when (isNothing rs) (fail estr)
     checkExistence rr estr = when (BS.null rr) (fail estr)
 
@@ -69,21 +73,20 @@ toSpfSeq r _   (IPv4 _) (SPF_Address q (Just dom) (l4,_))
 toSpfSeq r _   (IPv6 _) (SPF_Address q (Just dom) (_,l6))
     = lookupAAAA r dom >>= doit6 q l6
 
-doit4 :: Qualifier -> Int -> Maybe [IPv4] -> IO SpfSeq
-doit4 q l4 is = do
-    checkDNS is "TempError"
-    return $ SS_IPv4Ranges q $ map (mkr l4) $ fromJust is
+doit4 :: Qualifier -> Int -> Either DNSError [IPv4] -> IO SpfSeq
+doit4 _ _  (Left _)   = fail "TempError"
+doit4 q l4 (Right is) = return $ SS_IPv4Ranges q $ map (mkr l4) is
   where
     mkr = flip makeAddrRange
 
-doit6 :: Qualifier -> Int -> Maybe [IPv6] -> IO SpfSeq
-doit6 q l6 is = do
-    checkDNS is "TempError"
-    return $ SS_IPv6Ranges q $ map (mkr l6) $ fromJust is
+doit6 :: Qualifier -> Int -> Either DNSError [IPv6] -> IO SpfSeq
+doit6 _ _  (Left _)   = fail "TempError"
+doit6 q l6 (Right is) = return $ SS_IPv6Ranges q $ map (mkr l6) is
   where
     mkr = flip makeAddrRange
 
 ----------------------------------------------------------------
 
-checkDNS :: Maybe a -> String -> IO ()
-checkDNS jrc estr = when (isNothing jrc) (fail estr)
+checkDNS :: Either DNSError a -> String -> IO ()
+checkDNS (Right _) _    = return ()
+checkDNS (Left  _) estr = fail estr
