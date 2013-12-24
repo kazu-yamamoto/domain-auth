@@ -36,7 +36,7 @@ case_ipv4_2 :: Assertion
 case_ipv4_2 = do
     rs <- makeResolvSeed defaultResolvConf
     withResolver rs $ \resolver ->
-        runSPF defaultLimit resolver "exapmle.org" ip >>= (@?= DATempError)
+        runSPF defaultLimit resolver "example.org" ip >>= (@?= DATempError)
   where
     ip = IPv4 . read $ "192.0.2.1"
 

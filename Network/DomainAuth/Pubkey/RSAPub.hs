@@ -25,10 +25,10 @@ lookupPublicKey' resolver domain = do
     ex <- DNS.lookupTXT resolver domain
     case ex of
         Left  _ -> return Nothing
-        Right x -> return $ extractPub (Just x) -- FIXME
+        Right x -> return $ extractPub x
 
-extractPub :: Maybe [ByteString] -> Maybe ByteString  -- FIXME
-extractPub = (>>= lookup "p" . parseTaggedValue . head)
+extractPub :: [ByteString] -> Maybe ByteString
+extractPub = lookup "p" . parseTaggedValue . head
 
 decodeRSAPublicyKey :: ByteString -> PublicKey
 decodeRSAPublicyKey bs = PublicKey size n e
