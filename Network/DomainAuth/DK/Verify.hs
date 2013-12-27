@@ -53,7 +53,7 @@ canonDkBody DK_NOFWS  = fromBodyWith removeFWS . removeTrailingEmptyLine
 ----------------------------------------------------------------
 
 verifyDK :: Mail -> DK -> PublicKey -> Bool
-verifyDK mail dk pub = rsassa_pkcs1_v1_5_verify ha_SHA1 pub cmail sig
+verifyDK mail dk pub = rsassa_pkcs1_v1_5_verify hashSHA1 pub cmail sig
   where
     sig = B.decode . dkSignature $ dk
     cmail = toLazyByteString (prepareDK dk mail)

@@ -57,8 +57,8 @@ verifyDKIM mail dkim pub = bodyHash1 mail == bodyHash2 dkim &&
     bodyHash2 = B.decode . dkimBodyHash
 
 hashAlgo1 :: DkimSigAlgo -> HashInfo
-hashAlgo1 RSA_SHA1   = ha_SHA1
-hashAlgo1 RSA_SHA256 = ha_SHA256
+hashAlgo1 RSA_SHA1   = hashSHA1
+hashAlgo1 RSA_SHA256 = hashSHA256
 
 hashAlgo2 :: DkimSigAlgo -> BL.ByteString -> BL.ByteString
 hashAlgo2 RSA_SHA1   = bytestringDigest . sha1

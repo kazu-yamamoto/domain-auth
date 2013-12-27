@@ -42,7 +42,7 @@ library
                         Network.DomainAuth.SPF.Resolver
                         Network.DomainAuth.SPF.Types
   Build-Depends:        base >= 4 && < 5
-                      , RSA
+                      , RSA >= 2.0
                       , SHA
                       , appar
                       , binary
