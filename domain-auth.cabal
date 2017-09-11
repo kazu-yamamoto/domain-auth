@@ -42,16 +42,15 @@ library
                         Network.DomainAuth.SPF.Resolver
                         Network.DomainAuth.SPF.Types
   Build-Depends:        base >= 4 && < 5
-                      , RSA >= 2.0
-                      , SHA
                       , appar
                       , binary
                       , blaze-builder
                       , bytestring
                       , containers
-                      , crypto-pubkey-types
+                      , cryptonite
                       , dns >= 1.0
                       , iproute
+                      , memory
                       , network
 Source-Repository head
   Type:                 git

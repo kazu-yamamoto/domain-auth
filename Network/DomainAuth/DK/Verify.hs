@@ -5,8 +5,11 @@ module Network.DomainAuth.DK.Verify (
   ) where
 
 import Blaze.ByteString.Builder
-import Codec.Crypto.RSA
+import Crypto.Hash
+import Crypto.PubKey.RSA
+import Crypto.PubKey.RSA.PKCS15
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map as M
 import Network.DomainAuth.DK.Types
 import Network.DomainAuth.Mail
@@ -53,7 +56,7 @@ canonDkBody DK_NOFWS  = fromBodyWith removeFWS . removeTrailingEmptyLine
 ----------------------------------------------------------------
 
 verifyDK :: Mail -> DK -> PublicKey -> Bool
-verifyDK mail dk pub = rsassa_pkcs1_v1_5_verify hashSHA1 pub cmail sig
+verifyDK mail dk pub = verify (Just SHA1) pub cmail sig
   where
-    sig = B.decode . dkSignature $ dk
-    cmail = toLazyByteString (prepareDK dk mail)
+    sig = BL.toStrict $ B.decode . dkSignature $ dk
+    cmail = toByteString (prepareDK dk mail)

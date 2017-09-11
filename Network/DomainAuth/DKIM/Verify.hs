@@ -5,11 +5,13 @@ module Network.DomainAuth.DKIM.Verify (
   ) where
 
 import Blaze.ByteString.Builder
-import Codec.Crypto.RSA
+import Crypto.Hash
+import Crypto.PubKey.RSA
+import Crypto.PubKey.RSA.PKCS15
+import Data.ByteArray
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
-import Data.Digest.Pure.SHA
 import Network.DomainAuth.DKIM.Btag
 import Network.DomainAuth.DKIM.Types
 import Network.DomainAuth.Mail
@@ -47,19 +49,18 @@ canonDkimBody DKIM_RELAXED = fromBodyWith relax . removeTrailingEmptyLine
 
 verifyDKIM :: Mail -> DKIM -> PublicKey -> Bool
 verifyDKIM mail dkim pub = bodyHash1 mail == bodyHash2 dkim &&
-                           rsassa_pkcs1_v1_5_verify hashfunc pub cmail sig
+                           verify' (dkimSigAlgo dkim) pub cmail sig
   where
-    hashfunc = hashAlgo1 (dkimSigAlgo dkim)
-    hashfunc2 = hashAlgo2 (dkimSigAlgo dkim)
-    sig = B.decode . dkimSignature $ dkim
-    cmail = toLazyByteString (prepareDKIM dkim mail)
-    bodyHash1 = hashfunc2 . toLazyByteString . canonDkimBody (dkimBodyCanon dkim) . mailBody
-    bodyHash2 = B.decode . dkimBodyHash
+    sig = BL.toStrict $ B.decode . dkimSignature $ dkim
+    cmail = toByteString $ prepareDKIM dkim mail
+    bodyHash1 = hashAlgo2 (dkimSigAlgo dkim) . toByteString . canonDkimBody (dkimBodyCanon dkim) . mailBody
+    bodyHash2 = BL.toStrict . B.decode . dkimBodyHash
 
-hashAlgo1 :: DkimSigAlgo -> HashInfo
-hashAlgo1 RSA_SHA1   = hashSHA1
-hashAlgo1 RSA_SHA256 = hashSHA256
+verify' :: DkimSigAlgo-> PublicKey -> ByteString -> ByteString -> Bool
+verify' RSA_SHA1   = verify (Just SHA1)
+verify' RSA_SHA256 = verify (Just SHA256)
 
-hashAlgo2 :: DkimSigAlgo -> BL.ByteString -> BL.ByteString
-hashAlgo2 RSA_SHA1   = bytestringDigest . sha1
-hashAlgo2 RSA_SHA256 = bytestringDigest . sha256
+hashAlgo2 :: ByteArray c => DkimSigAlgo -> ByteString -> c
+hashAlgo2 RSA_SHA1   = convert . (hash :: ByteString -> Digest SHA1)
+hashAlgo2 RSA_SHA256 = convert . (hash :: ByteString -> Digest SHA256)
+
