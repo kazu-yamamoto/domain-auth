@@ -30,7 +30,7 @@ case_ipv4 = do
     withResolver rs $ \resolver ->
         runSPF defaultLimit resolver "mew.org" ip >>= (@?= DAPass)
   where
-    ip = IPv4 . read $ "202.232.15.101"
+    ip = IPv4 . read $ "210.130.207.72"
 
 case_ipv4_2 :: Assertion
 case_ipv4_2 = do
