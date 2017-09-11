@@ -2,7 +2,6 @@
 
 module Network.DomainAuth.Mail.Parser where
 
-import Control.Applicative
 import qualified Data.ByteString as BS
 import Data.Word
 import Network.DomainAuth.Mail.Types

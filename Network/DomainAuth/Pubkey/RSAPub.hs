@@ -3,8 +3,6 @@
 module Network.DomainAuth.Pubkey.RSAPub where
 
 import Codec.Crypto.RSA
-import Control.Applicative
-import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS (foldl', dropWhile, length, tail)
 import qualified Data.ByteString.Char8 as BS ()

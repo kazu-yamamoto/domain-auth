@@ -6,7 +6,6 @@ import Blaze.ByteString.Builder
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS (lines)
-import Data.Monoid
 import Data.Word
 
 crlf :: Builder

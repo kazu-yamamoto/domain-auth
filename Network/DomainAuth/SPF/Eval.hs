@@ -1,6 +1,5 @@
 module Network.DomainAuth.SPF.Eval (evalSPF, Limit(..), defaultLimit) where
 
-import Control.Applicative
 import Data.IORef
 import Data.IP
 import Data.Maybe

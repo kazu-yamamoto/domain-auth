@@ -16,7 +16,6 @@ module Network.DomainAuth.DK (
   , dkFieldKey
   ) where
 
-import Control.Applicative
 import Network.DNS as DNS (Resolver)
 import Network.DomainAuth.DK.Parser
 import Network.DomainAuth.DK.Types

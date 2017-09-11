@@ -6,7 +6,6 @@ module Network.DomainAuth.Pubkey.Der (
   , TLV (..)
   ) where
 
-import Control.Applicative hiding (many)
 import Control.Monad
 import Data.Binary.Get
 import Data.Bits

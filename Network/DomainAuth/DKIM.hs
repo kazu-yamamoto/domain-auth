@@ -17,7 +17,6 @@ module Network.DomainAuth.DKIM (
   ) where
 
 import qualified Data.ByteString as BS
-import Control.Applicative
 import Network.DNS as DNS (Resolver)
 import Network.DomainAuth.DKIM.Parser
 import Network.DomainAuth.DKIM.Types

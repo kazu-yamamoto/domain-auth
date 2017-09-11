@@ -2,7 +2,6 @@
 
 module Network.DomainAuth.DKIM.Parser where
 
-import Control.Applicative
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import Data.Maybe

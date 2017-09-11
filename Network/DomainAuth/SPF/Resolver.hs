@@ -2,7 +2,6 @@
 
 module Network.DomainAuth.SPF.Resolver (resolveSPF) where
 
-import Control.Applicative
 import Control.Monad
 import Data.IP
 import qualified Data.ByteString.Char8 as BS
