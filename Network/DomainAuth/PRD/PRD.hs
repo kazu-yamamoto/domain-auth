@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-{-|
-  Purported Responsible Domain, RFC 4407.
--}
+-- | Purported Responsible Domain, RFC 4407.
 
 module Network.DomainAuth.PRD.PRD (
     PRD
@@ -24,10 +22,8 @@ type HD = [(CanonFieldKey,RawFieldValue)]
 
 data DST = DST_Zero | DST_Invalid | DST_Valid Domain deriving (Eq, Show)
 
-{-|
-  Abstract type for context to decide PRD(purported responsible domain)
-  according to RFC 4407.
--}
+-- | Abstract type for context to decide PRD(purported responsible domain)
+--   according to RFC 4407.
 data PRD = PRD {
     praFrom         :: DST
   , praSender       :: DST
@@ -36,9 +32,7 @@ data PRD = PRD {
   , praHeader       :: HD
   } deriving Show
 
-{-|
-  Initial context of PRD.
--}
+-- | Initial context of PRD.
 initialPRD :: PRD
 initialPRD = PRD {
     praFrom         = DST_Zero
@@ -50,9 +44,7 @@ initialPRD = PRD {
 
 ----------------------------------------------------------------
 
-{-|
-  Pushing a field key and its value in to the PRD context.
--}
+-- | Pushing a field key and its value in to the PRD context.
 pushPRD :: RawFieldKey -> RawFieldValue -> PRD -> PRD
 pushPRD key val ctx = case ckey of
     "from"          -> pushFrom ctx' jdom
@@ -65,9 +57,81 @@ pushPRD key val ctx = case ckey of
     jdom = extractDomain val
     ctx' = ctx { praHeader = (ckey,val) : praHeader ctx }
 
-{-|
-  Deciding PRD from the RPD context.
--}
+-- | Deciding PRD from the RPD context.
+--
+-- >>> let maddr1 = "alice@alice.example.jp"
+-- >>> let maddr2 = "bob@bob.example.jp"
+-- >>> let maddr3 = "chris@chris.example.jp"
+-- >>> let maddr4 = "dave@dave.example.jp"
+-- >>> decidePRD (pushPRD "from" "alice@alice.example.jp" initialPRD)
+-- Just "alice.example.jp"
+-- >>> :{
+-- decidePRD (pushPRD "from" maddr1
+--          $ pushPRD "from" maddr1 initialPRD)
+-- :}
+-- Nothing
+--
+-- >>> :{
+-- decidePRD (pushPRD "sender" maddr2
+--          $ pushPRD "from" maddr1
+--          $ pushPRD "from" maddr1 initialPRD)
+-- :}
+-- Just "bob.example.jp"
+--
+-- >>> :{
+-- decidePRD (pushPRD "sender" maddr2
+--          $ pushPRD "sender" maddr2
+--          $ pushPRD "from" maddr1
+--          $ pushPRD "from" maddr1 initialPRD)
+-- :}
+-- Nothing
+--
+-- >>> :{
+-- decidePRD (pushPRD "resent-from" maddr3
+--          $ pushPRD "sender" maddr2
+--          $ pushPRD "sender" maddr2
+--          $ pushPRD "from" maddr1
+--          $ pushPRD "from" maddr1 initialPRD)
+-- :}
+-- Just "chris.example.jp"
+--
+-- >>> :{
+-- decidePRD (pushPRD "resent-sender" maddr4
+--           $ pushPRD "resent-from" maddr3
+--           $ pushPRD "sender" maddr2
+--           $ pushPRD "sender" maddr2
+--           $ pushPRD "from" maddr1
+--           $ pushPRD "from" maddr1 initialPRD)
+-- :}
+-- Just "dave.example.jp"
+--
+-- >>> :{
+-- decidePRD (pushPRD "resent-sender" maddr4
+--          $ pushPRD "resent-from" maddr3
+--          $ pushPRD "sender" maddr2
+--          $ pushPRD "received" "dummy"
+--          $ pushPRD "from" maddr1 initialPRD)
+-- :}
+-- Just "dave.example.jp"
+--
+-- >>> :{
+-- decidePRD (pushPRD "resent-sender" maddr4
+--          $ pushPRD "received" "dummy"
+--          $ pushPRD "resent-from" maddr3
+--          $ pushPRD "sender" maddr2
+--          $ pushPRD "from" maddr1 initialPRD)
+-- :}
+-- Just "chris.example.jp"
+--
+-- >>> :{
+-- decidePRD (pushPRD "received" "dummy"
+--           $ pushPRD "resent-sender" maddr4
+--           $ pushPRD "resent-from" maddr3
+--           $ pushPRD "sender" maddr2
+--           $ pushPRD "from" maddr1 initialPRD)
+-- :}
+-- Just "dave.example.jp"
+
 decidePRD :: PRD -> Maybe Domain
 decidePRD ctx =
     let jds = [ praResentSender ctx
@@ -76,9 +140,11 @@ decidePRD ctx =
               , praFrom ctx
               ]
     in foldl' mplus mzero $ map toMaybe jds
-{-|
-  Taking the value of From: from the RPD context.
--}
+
+-- | Taking the value of From: from the RPD context.
+--
+-- >>> decideFrom (pushPRD "from" "alice@alice.example.jp" initialPRD)
+-- Just "alice.example.jp"
 decideFrom :: PRD -> Maybe Domain
 decideFrom = toMaybe . praFrom
 
