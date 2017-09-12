@@ -6,9 +6,7 @@ import Data.Maybe
 import Network.DomainAuth.SPF.Types
 import Network.DomainAuth.Types
 
-{-|
-  Limit for SPF authentication.
--}
+-- |  Limit for SPF authentication.
 data Limit = Limit {
     -- | How many \"redirect\"/\"include\" should be followed.
     limit :: Int
@@ -18,12 +16,13 @@ data Limit = Limit {
   , ipv6_masklen :: Int
     -- | Whether or not \"+all\" is rejected.
   , reject_plus_all :: Bool
-  }
+  } deriving (Eq, Show)
 
-{-|
-  Default 'Limit'. 'limit' is 10. 'ipv4_masklen' is 16.
-  'ipv6_masklen' is 48. 'reject_plus_all' is 'True'.
--}
+-- | Default value for 'Limit'.
+--
+-- >>> defaultLimit
+-- Limit {limit = 10, ipv4_masklen = 16, ipv6_masklen = 48, reject_plus_all = True}
+
 defaultLimit :: Limit
 defaultLimit = Limit {
     limit = 10
@@ -54,10 +53,8 @@ evalspf ref lim ip (s:ss) = do
                res      -> return res
 
 ----------------------------------------------------------------
-{-
-Follow N of redirect/include. But the last one is not
-evaluated.
--}
+-- Follow N of redirect/include. But the last one is not
+-- evaluated.
 
 eval :: IORef Int -> Limit -> IP -> IO SpfSeq -> IO (Maybe DAResult)
 eval ref lim ip is = do
