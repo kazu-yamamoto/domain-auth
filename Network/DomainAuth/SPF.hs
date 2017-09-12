@@ -25,12 +25,37 @@ import System.IO.Error
 --   'Limit', 'SpfPermError' is returned.
 --
 -- >>> rs <- makeResolvSeed defaultResolvConf
+--
+-- pass (IPv4 & IPv6):
+--
 -- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "mew.org" "210.130.207.72"
 -- pass
--- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "example.org" "192.0.2.1"
--- hardfail
 -- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "iij.ad.jp" "2001:240:bb42:8010::1:126"
 -- pass
+--
+-- hardfail:
+--
+-- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "example.org" "192.0.2.1"
+-- hardfail
+--
+-- redirect and include:
+--
+-- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "gmail.com" "72.14.192.1"
+-- pass
+-- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "gmail.com" "72.14.128.1"
+-- softfail
+--
+-- limit:
+--
+-- >>> let limit1 = defaultLimit { ipv4_masklen = 24 }
+-- >>> withResolver rs $ \rslv -> runSPF limit1 rslv "gmail.com" "72.14.192.1"
+-- softfail
+
+{- now nifty.com is broken
+-- >>> let limit2 = defaultLimit { limit = 2 }
+-- >>> withResolver rs $ \rslv -> runSPF limit2 rslv "nifty.com" "202.248.88.1"
+-- pass
+-}
 
 runSPF :: Limit -> Resolver -> Domain -> IP -> IO DAResult
 runSPF lim resolver dom ip =
