@@ -9,6 +9,7 @@ import Network.DomainAuth.Types
 -- |  Limit for SPF authentication.
 data Limit = Limit {
     -- | How many \"redirect\"/\"include\" should be followed.
+    --   'DAPermError' is returned if reached to this limit.
     limit :: Int
     -- | Ignoring IPv4 range whose mask length is shorter than this.
   , ipv4_masklen :: Int
