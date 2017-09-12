@@ -50,12 +50,9 @@ import System.IO.Error
 -- >>> let limit1 = defaultLimit { ipv4_masklen = 24 }
 -- >>> withResolver rs $ \rslv -> runSPF limit1 rslv "gmail.com" "72.14.192.1"
 -- softfail
-
-{- now nifty.com is broken
 -- >>> let limit2 = defaultLimit { limit = 2 }
 -- >>> withResolver rs $ \rslv -> runSPF limit2 rslv "nifty.com" "202.248.88.1"
--- pass
--}
+-- permerror
 
 runSPF :: Limit -> Resolver -> Domain -> IP -> IO DAResult
 runSPF lim resolver dom ip =
