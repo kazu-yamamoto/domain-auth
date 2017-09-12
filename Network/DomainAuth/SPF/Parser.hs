@@ -6,6 +6,7 @@ import Network.DNS (Domain)
 import Network.DomainAuth.SPF.Types
 import Prelude hiding (all)
 import Text.Appar.ByteString
+import Text.Read (readMaybe)
 
 ----------------------------------------------------------------
 
@@ -52,10 +53,22 @@ mechanism :: Directive
 mechanism q = choice $ map ($ q) [ip4,ip6,all,address,mx,include]
 
 ip4 :: Directive
-ip4 q = try $ SPF_IPv4Range q . read <$> (string "ip4:" *> some (noneOf " "))
+ip4 q = try $ do
+    mip <- readMaybe <$> ip4range
+    case mip of
+      Nothing -> fail "ip4"
+      Just ip -> return $ SPF_IPv4Range q ip
+  where
+    ip4range = string "ip4:" *> some (noneOf " ")
 
 ip6 :: Directive
-ip6 q = try $ SPF_IPv6Range q . read <$> (string "ip6:" *> some (noneOf " "))
+ip6 q = try $ do
+    mip <- readMaybe <$> ip6range
+    case mip of
+      Nothing -> fail "ip6"
+      Just ip -> return $ SPF_IPv6Range q ip
+  where
+    ip6range = string "ip6:" *> some (noneOf " ")
 
 all :: Directive
 all q = try $ SPF_All q <$ string "all"
