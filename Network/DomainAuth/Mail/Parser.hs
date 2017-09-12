@@ -102,11 +102,14 @@ parseField bs = (k,v')
          else v
 
 ----------------------------------------------------------------
-
-{-|
-  Parsing field value of tag=value.
--}
 -- This breaks spaces in the note tag.
+
+-- | Parsing field value of tag=value.
+--
+-- >>> parseTaggedValue " k = rsa ; p= MIGfMA0G; n=A 1024 bit key;"
+-- [("k","rsa"),("p","MIGfMA0G"),("n","A1024bitkey")]
+-- >>> parseTaggedValue " k = \nrsa ;\n p= MIGfMA0G;\n n=A 1024 bit key"
+-- [("k","rsa"),("p","MIGfMA0G"),("n","A1024bitkey")]
 parseTaggedValue :: RawFieldValue -> [(BS.ByteString,BS.ByteString)]
 parseTaggedValue xs = vss
   where
