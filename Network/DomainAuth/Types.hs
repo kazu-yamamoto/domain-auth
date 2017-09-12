@@ -28,7 +28,7 @@ data DAResult = DAPass
 instance Show DAResult where
     show DAPass       = "pass"
     show DAHardFail   = "hardfail"
-    show DASoftFail   = "fail"
+    show DASoftFail   = "softfail"
     show DANeutral    = "neutral"
     show DAFail       = "fail"
     show DATempError  = "temperror"
