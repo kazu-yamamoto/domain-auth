@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-{-|
-  A library for DomainKeys (<http://www.ietf.org/rfc/rfc4070>).
-  Currently, only receiver side is implemented.
--}
+-- | A library for DomainKeys (<http://www.ietf.org/rfc/rfc4070>).
+--   Currently, only receiver side is implemented.
 
 module Network.DomainAuth.DK (
   -- * Documentation
@@ -25,9 +23,7 @@ import Network.DomainAuth.Pubkey.RSAPub
 import Network.DomainAuth.Types
 import qualified Data.ByteString as BS (append)
 
-{-|
-  Verifying 'Mail' with DomainKeys.
--}
+-- | Verifying 'Mail' with DomainKeys.
 runDK :: Resolver -> Mail -> IO DAResult
 runDK resolver mail = dk1
   where
@@ -35,10 +31,8 @@ runDK resolver mail = dk1
     dk2 dkv = maybe (return DAPermError) dk3 $ parseDK (fieldValueUnfolded dkv)
     dk3     = runDK' resolver mail
 
-{-|
-  Verifying 'Mail' with DomainKeys. The value of DomainKey-Signature:
-  should be parsed beforehand.
--}
+-- | Verifying 'Mail' with DomainKeys. The value of DomainKey-Signature:
+--   should be parsed beforehand.
 runDK' :: Resolver -> Mail -> DK -> IO DAResult
 runDK' resolver mail dk = maybe DATempError (verify mail dk) <$> pub
   where
