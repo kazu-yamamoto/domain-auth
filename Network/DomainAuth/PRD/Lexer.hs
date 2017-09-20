@@ -19,6 +19,16 @@ wsp = oneOf " \t\n"
 
 ----------------------------------------------------------------
 
+-- |
+--
+-- >>> parse structured "From: Kazu Yamamoto (=?iso-2022-jp?B?GyRCOzNLXE9CSScbKEI=?=)\n <kazu@example.net>"
+-- Just ["From",":","Kazu","Yamamoto","<","kazu","@","example",".","net",">"]
+-- >>> parse structured "To:A Group(Some people)\n      :Chris Jones <c@(Chris's host.)public.example>,\n          joe@example.org,\n   John <jdoe@one.test> (my dear friend); (the end of the group)\n"
+-- Just ["To",":","A","Group",":","Chris","Jones","<","c","@","public",".","example",">",",","joe","@","example",".","org",",","John","<","jdoe","@","one",".","test",">",";"]
+-- >>> parse structured "Date: Thu,\n      13\n        Feb\n          1969\n      23:32\n               -0330 (Newfoundland Time)\n"
+-- Just ["Date",":","Thu",",","13","Feb","1969","23",":","32","-0330"]
+-- >>> parse structured "From: Pete(A nice \\) chap) <pete(his account)@silly.test(his host)>\n"
+-- Just ["From",":","Pete","<","pete","@","silly",".","test",">"]
 structured :: Parser [String]
 structured = removeComments <$> many (choice choices)
   where
