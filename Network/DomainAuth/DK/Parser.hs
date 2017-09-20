@@ -10,10 +10,32 @@ import Data.Maybe
 import Network.DomainAuth.DK.Types
 import Network.DomainAuth.Mail
 
+-- $setup
+-- >>> import Text.Pretty.Simple
+-- >>> import Data.ByteString.Char8 as BS8
+
+
 -- | Parsing DomainKey-Signature:.
 --
--- >>> parseDK "a=rsa-sha1; s=brisbane; d=football.example.com;\n  c=simple; q=dns;\n  b=dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZ\n    VoG4ZHRNiYzR;"
--- Just (DK {dkAlgorithm = DK_RSA_SHA1, dkSignature = "dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZVoG4ZHRNiYzR", dkCanonAlgo = DK_SIMPLE, dkDomain0 = "football.example.com", dkFields = Nothing, dkSelector0 = "brisbane"})
+-- >>> :{
+-- let dk = BS8.concat [
+--                 "a=rsa-sha1; s=brisbane; d=football.example.com;\n"
+--               , "  c=simple; q=dns;\n"
+--               , "  b=dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZ\n"
+--               , "    VoG4ZHRNiYzR;"
+--               ]
+-- in pPrintNoColor $ parseDK dk
+-- :}
+-- Just 
+--     ( DK 
+--         { dkAlgorithm = DK_RSA_SHA1
+--         , dkSignature = "dzdVyOfAKCdLXdJOc9G2q8LoXSlEniSbav+yuU4zGeeruD00lszZVoG4ZHRNiYzR"
+--         , dkCanonAlgo = DK_SIMPLE
+--         , dkDomain0 = "football.example.com"
+--         , dkFields = Nothing
+--         , dkSelector0 = "brisbane"
+--         } 
+--     )
 parseDK :: RawFieldValue -> Maybe DK
 parseDK val = toDK domkey
   where

@@ -63,6 +63,7 @@ Test-Suite doctest
   Main-Is:              doctests.hs
   Build-Depends:        base >= 4 && < 5
                       , doctest >= 0.9.3
+                      , pretty-simple
 
 Source-Repository head
   Type:                 git
