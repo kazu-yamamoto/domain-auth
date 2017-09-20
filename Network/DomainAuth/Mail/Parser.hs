@@ -8,9 +8,22 @@ import Network.DomainAuth.Mail.Types
 import Network.DomainAuth.Mail.XMail
 import Network.DomainAuth.Utils
 
+-- $setup
+-- >>> :set -XOverloadedStrings
+
 ----------------------------------------------------------------
 
 -- | Obtain 'Mail' from a file.
+--
+-- >>> let out1 = finalizeMail $ pushBody "body" $ pushField "to" "val" $ pushField "from" "val" initialXMail
+-- >>> getMail "from: val\nto: val\n\nbody" == out1
+-- True
+-- >>> let out2 = finalizeMail $ pushBody "body" $ pushField "to" "val" $ pushField "from" "val\tval" initialXMail
+-- >>> getMail "from: val\tval\nto: val\n\nbody" == out2
+-- True
+-- >>> let out3 = finalizeMail $ pushBody "" $ pushField "to" "val" $ pushField "from" "val" initialXMail
+-- >>> getMail "from: val\nto: val\n" == out3
+-- True
 readMail :: FilePath -> IO Mail
 readMail file = getMail <$> BS.readFile file
 
