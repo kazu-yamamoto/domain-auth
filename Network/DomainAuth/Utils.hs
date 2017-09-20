@@ -94,6 +94,12 @@ chop bs
   | BS.last bs == 13 = BS.init bs -- 13 == '\r'
   | otherwise        = bs
 
+-- |
+--
+-- >>> blines "foo\r\n\r\nbar\r\nbaz"
+-- ["foo","","bar","baz"]
+-- >>> blines "foo\r\n"
+-- ["foo"]
 blines :: ByteString -> [ByteString]
 blines = map chop . BS.lines
 
