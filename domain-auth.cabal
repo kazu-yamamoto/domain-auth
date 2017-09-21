@@ -34,7 +34,6 @@ library
                         Network.DomainAuth.DKIM.Types
                         Network.DomainAuth.DKIM.Verify
                         Network.DomainAuth.Pubkey.Base64
-                        Network.DomainAuth.Pubkey.Der
                         Network.DomainAuth.Pubkey.RSAPub
                         Network.DomainAuth.PRD.Domain
                         Network.DomainAuth.PRD.Lexer
@@ -45,7 +44,8 @@ library
                         Network.DomainAuth.SPF.Types
   Build-Depends:        base >= 4 && < 5
                       , appar
-                      , binary
+                      , asn1-encoding
+                      , asn1-types
                       , bytestring
                       , containers
                       , cryptonite
@@ -53,6 +53,7 @@ library
                       , iproute
                       , memory
                       , network
+                      , x509
 
 Test-Suite doctest
   Type:                 exitcode-stdio-1.0
