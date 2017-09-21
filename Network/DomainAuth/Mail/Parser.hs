@@ -14,6 +14,12 @@ import Network.DomainAuth.Utils
 ----------------------------------------------------------------
 
 -- | Obtain 'Mail' from a file.
+readMail :: FilePath -> IO Mail
+readMail file = getMail <$> BS.readFile file
+
+----------------------------------------------------------------
+
+-- | Obtain 'Mail' from 'RawMail'.
 --
 -- >>> let out1 = finalizeMail $ pushBody "body" $ pushField "to" "val" $ pushField "from" "val" initialXMail
 -- >>> getMail "from: val\nto: val\n\nbody" == out1
@@ -24,12 +30,6 @@ import Network.DomainAuth.Utils
 -- >>> let out3 = finalizeMail $ pushBody "" $ pushField "to" "val" $ pushField "from" "val" initialXMail
 -- >>> getMail "from: val\nto: val\n" == out3
 -- True
-readMail :: FilePath -> IO Mail
-readMail file = getMail <$> BS.readFile file
-
-----------------------------------------------------------------
-
--- | Obtain 'Mail' from 'RawMail'.
 getMail :: RawMail -> Mail
 getMail bs = finalizeMail $ pushBody rbdy xmail
   where
