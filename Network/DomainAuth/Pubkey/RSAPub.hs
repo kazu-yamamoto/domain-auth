@@ -41,7 +41,7 @@ extractPub = lookup "p" . parseTaggedValue . head
 decodeRSAPublicyKey :: ByteString -> PublicKey
 decodeRSAPublicyKey bs = PublicKey size n e
   where
-    subjectPublicKeyInfo = D.decode . B.decode $ bs
+    subjectPublicKeyInfo = D.decode . B.decode' $ bs
     [_, subjectPublicKey] = D.tlv subjectPublicKeyInfo
     rsaPublicKey = D.decode . toLazy . bitString . D.cnt $ subjectPublicKey
     [bn',be'] = D.tlv rsaPublicKey

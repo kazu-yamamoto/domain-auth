@@ -4,11 +4,12 @@ module Network.DomainAuth.DK.Verify (
     verifyDK, prepareDK
   ) where
 
-import Blaze.ByteString.Builder
 import Crypto.Hash
 import Crypto.PubKey.RSA
 import Crypto.PubKey.RSA.PKCS15
 import Data.ByteString (ByteString)
+import Data.ByteString.Builder (Builder)
+import qualified Data.ByteString.Builder as BB
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map as M
 import Network.DomainAuth.DK.Types
@@ -58,5 +59,5 @@ canonDkBody DK_NOFWS  = fromBodyWith removeFWS . removeTrailingEmptyLine
 verifyDK :: Mail -> DK -> PublicKey -> Bool
 verifyDK mail dk pub = verify (Just SHA1) pub cmail sig
   where
-    sig = BL.toStrict $ B.decode . dkSignature $ dk
-    cmail = toByteString (prepareDK dk mail)
+    sig = B.decode . dkSignature $ dk
+    cmail = BL.toStrict $ BB.toLazyByteString $ prepareDK dk mail

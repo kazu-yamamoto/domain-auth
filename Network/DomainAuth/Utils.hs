@@ -2,14 +2,14 @@
 
 module Network.DomainAuth.Utils where
 
-import Blaze.ByteString.Builder
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
+import Data.ByteString.Builder
 import qualified Data.ByteString.Char8 as BS (lines)
 import Data.Word
 
 crlf :: Builder
-crlf = fromByteString "\r\n"
+crlf = byteString "\r\n"
 
 (+++) :: Monoid a => a -> a -> a
 (+++) = mappend
@@ -26,10 +26,10 @@ appendCRLF :: Builder -> Builder -> Builder
 appendCRLF x y = x +++ crlf +++ y
 
 appendCRLF' :: ByteString -> Builder -> Builder
-appendCRLF' x = appendCRLF (fromByteString x)
+appendCRLF' = appendCRLF . byteString
 
 appendCRLFWith :: (a -> ByteString) -> a -> Builder -> Builder
-appendCRLFWith modify x y = fromByteString (modify x) +++ crlf +++ y
+appendCRLFWith modify x y = byteString (modify x) +++ crlf +++ y
 
 concatCRLF :: [ByteString] -> Builder
 concatCRLF = foldr appendCRLF' empty

@@ -4,13 +4,14 @@ module Network.DomainAuth.DKIM.Verify (
     verifyDKIM, prepareDKIM
   ) where
 
-import Blaze.ByteString.Builder
 import Crypto.Hash
 import Crypto.PubKey.RSA
 import Crypto.PubKey.RSA.PKCS15
 import Data.ByteArray
 import Data.ByteString (ByteString)
+import Data.ByteString.Builder (Builder)
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Builder as BB
 import qualified Data.ByteString.Lazy as BL
 import Network.DomainAuth.DKIM.Btag
 import Network.DomainAuth.DKIM.Types
@@ -25,7 +26,7 @@ prepareDKIM dkim mail = header
   where
     dkimField:fields = fieldsFrom dkimFieldKey (mailHeader mail)
     hCanon = canonDkimField (dkimHeaderCanon dkim)
-    canon = fromByteString . removeBtagValue . hCanon
+    canon = BB.byteString . removeBtagValue . hCanon
     targets = fieldsWith (dkimFields dkim) fields
     header = concatCRLFWith hCanon targets +++ canon dkimField
 
@@ -51,10 +52,10 @@ verifyDKIM :: Mail -> DKIM -> PublicKey -> Bool
 verifyDKIM mail dkim pub = bodyHash1 mail == bodyHash2 dkim &&
                            verify' (dkimSigAlgo dkim) pub cmail sig
   where
-    sig = BL.toStrict $ B.decode . dkimSignature $ dkim
-    cmail = toByteString $ prepareDKIM dkim mail
-    bodyHash1 = hashAlgo2 (dkimSigAlgo dkim) . toByteString . canonDkimBody (dkimBodyCanon dkim) . mailBody
-    bodyHash2 = BL.toStrict . B.decode . dkimBodyHash
+    sig = B.decode . dkimSignature $ dkim
+    cmail = BL.toStrict $ BB.toLazyByteString $ prepareDKIM dkim mail
+    bodyHash1 = hashAlgo2 (dkimSigAlgo dkim) . BL.toStrict . BB.toLazyByteString . canonDkimBody (dkimBodyCanon dkim) . mailBody
+    bodyHash2 = B.decode . dkimBodyHash
 
 verify' :: DkimSigAlgo-> PublicKey -> ByteString -> ByteString -> Bool
 verify' RSA_SHA1   = verify (Just SHA1)

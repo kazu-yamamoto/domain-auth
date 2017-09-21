@@ -2,15 +2,17 @@
 
 module Network.DomainAuth.Mail.Mail where
 
-import Blaze.ByteString.Builder
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as BS
+import Data.ByteString.Builder (Builder)
+import qualified Data.ByteString.Builder as BB
+import qualified Data.ByteString.Char8 as BS8
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.Foldable as F (foldr)
 import Data.List
 import Data.Sequence (Seq, viewr, ViewR(..), empty)
 import Network.DomainAuth.Mail.Types
-import Network.DomainAuth.Utils hiding (empty)
 import qualified Network.DomainAuth.Utils as B (empty)
+import Network.DomainAuth.Utils hiding (empty)
 
 ----------------------------------------------------------------
 
@@ -59,11 +61,11 @@ isNotKeyOf key fld = fieldSearchKey fld /= key
 
 -- | Obtaining folded (raw) field value.
 fieldValueFolded :: Field -> RawFieldValue
-fieldValueFolded = toByteString . concatCRLF . fieldValue
+fieldValueFolded = BL.toStrict . BB.toLazyByteString . concatCRLF . fieldValue
 
 -- | Obtaining unfolded (removing CRLF) field value.
 fieldValueUnfolded :: Field -> RawFieldValue
-fieldValueUnfolded = BS.concat . fieldValue
+fieldValueUnfolded = BS8.concat . fieldValue
 
 ----------------------------------------------------------------
 
