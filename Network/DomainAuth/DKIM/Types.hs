@@ -8,9 +8,7 @@ import Network.DomainAuth.Mail
 
 ----------------------------------------------------------------
 
-{-|
-  Canonicalized key for DKIM-Signature:.
--}
+-- | Canonicalized key for DKIM-Signature:.
 dkimFieldKey :: CanonFieldKey
 dkimFieldKey = "dkim-signature"
 
@@ -32,14 +30,10 @@ data DKIM = DKIM {
   , dkimSelector0   :: ByteString
   } deriving (Eq,Show)
 
-{-|
-  Getting of the value of the \"d\" tag in DKIM-Signature:.
--}
+-- | Getting of the value of the \"d\" tag in DKIM-Signature:.
 dkimDomain :: DKIM -> Domain
 dkimDomain = dkimDomain0
 
-{-|
-  Getting of the value of the \"s\" tag in DKIM-Signature:.
--}
+-- | Getting of the value of the \"s\" tag in DKIM-Signature:.
 dkimSelector :: DKIM -> ByteString
 dkimSelector = dkimSelector0

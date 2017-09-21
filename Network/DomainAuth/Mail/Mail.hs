@@ -33,9 +33,8 @@ fieldsAfter key = safeTail . fieldsFrom key
     safeTail [] = []
     safeTail xs = tail xs
 
-{-
-  RFC 4871 is ambiguous, so implement only normal case.
--}
+-- RFC 4871 is ambiguous, so implement only normal case.
+
 -- | Obtaining all fields with DKIM algorithm.
 fieldsWith :: [CanonFieldKey] -> Header -> Header
 fieldsWith [] _ = []

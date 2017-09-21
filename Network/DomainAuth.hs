@@ -1,6 +1,4 @@
-{-|
-  Library for Sender Policy Framework, SenderID, DomainKeys and DKIM.
--}
+-- | Library for Sender Policy Framework, SenderID, DomainKeys and DKIM.
 
 module Network.DomainAuth (
     module Network.DomainAuth.Mail

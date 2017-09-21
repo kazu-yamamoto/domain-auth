@@ -1,6 +1,4 @@
-{-|
-  A library to parse e-mail messages both from a file and Milter(<https://www.milter.org/>).
--}
+-- | A library to parse e-mail messages both from a file and Milter(<https://www.milter.org/>).
 
 module Network.DomainAuth.Mail (
   -- * Documentation

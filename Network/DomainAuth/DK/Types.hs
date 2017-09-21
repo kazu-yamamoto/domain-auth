@@ -9,9 +9,7 @@ import Network.DomainAuth.Mail
 
 ----------------------------------------------------------------
 
-{-|
-  Canonicalized key for DomainKey-Signature:.
--}
+-- | Canonicalized key for DomainKey-Signature:.
 dkFieldKey :: CanonFieldKey
 dkFieldKey = "domainkey-signature"
 
@@ -22,10 +20,7 @@ data DkCanonAlgo = DK_SIMPLE | DK_NOFWS deriving (Eq,Show)
 --data DkQuery = DK_DNS deriving (Eq,Show)
 type DkFields = M.Map ByteString Bool -- Key Bool
 
-{-|
-  Abstract type for DomainKey-Signature:
--}
-
+-- | Abstract type for DomainKey-Signature:
 data DK = DK {
     dkAlgorithm :: DkAlgorithm
   , dkSignature :: ByteString
@@ -36,14 +31,10 @@ data DK = DK {
   , dkSelector0 :: ByteString
   } deriving (Eq,Show)
 
-{-|
-  Getting of the value of the \"d\" tag in DomainKey-Signature:.
--}
+-- | Getting of the value of the \"d\" tag in DomainKey-Signature:.
 dkDomain :: DK -> Domain
 dkDomain = dkDomain0
 
-{-|
-  Getting of the value of the \"s\" tag in DomainKey-Signature:.
--}
+-- | Getting of the value of the \"s\" tag in DomainKey-Signature:.
 dkSelector :: DK -> ByteString
 dkSelector = dkSelector0

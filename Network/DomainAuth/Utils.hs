@@ -39,9 +39,7 @@ concatCRLFWith modify = foldr (appendCRLFWith modify) empty
 
 ----------------------------------------------------------------
 
-{-|
-  Replaces multiple WPSs to a single SP.
--}
+-- | Replaces multiple WPSs to a single SP.
 reduceWSP :: Cook
 reduceWSP "" = ""
 reduceWSP bs

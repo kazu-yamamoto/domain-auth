@@ -20,9 +20,7 @@ type RawBodyChunk = ByteString
 
 ----------------------------------------------------------------
 
-{-|
-  Type for parsed e-mail message.
--}
+-- | Type for parsed e-mail message.
 data Mail = Mail {
     mailHeader :: Header
   , mailBody :: Body
@@ -31,14 +29,10 @@ data Mail = Mail {
 isEmpty :: Body -> Bool
 isEmpty = (== empty)
 
-{-|
-  Header type for parsed e-mail message.
--}
+-- | Header type for parsed e-mail message.
 type Header = [Field]
 
-{-|
-  Field type for parsed e-mail message.
--}
+-- | Field type for parsed e-mail message.
 data Field = Field {
     fieldSearchKey :: CanonFieldKey
   , fieldKey       :: FieldKey
