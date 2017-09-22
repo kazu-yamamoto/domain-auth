@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.DomainAuth.SPF.Resolver (resolveSPF) where
+module Network.DomainAuth.SPF.Resolver (
+    resolveSPF
+  ) where
 
 import Control.Monad
 import Data.IP

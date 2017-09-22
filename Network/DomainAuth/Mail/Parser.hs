@@ -1,6 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.DomainAuth.Mail.Parser where
+module Network.DomainAuth.Mail.Parser (
+    readMail
+  , getMail
+  , parseTaggedValue
+  ) where
 
 import qualified Data.ByteString as BS
 import Data.Word

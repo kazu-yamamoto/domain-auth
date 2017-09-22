@@ -1,4 +1,6 @@
-module Network.DomainAuth.PRD.Domain (extractDomain) where
+module Network.DomainAuth.PRD.Domain (
+    extractDomain
+  ) where
 
 import Network.DNS (Domain)
 import Network.DomainAuth.Mail

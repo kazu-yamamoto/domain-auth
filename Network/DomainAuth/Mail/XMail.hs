@@ -1,4 +1,10 @@
-module Network.DomainAuth.Mail.XMail where
+module Network.DomainAuth.Mail.XMail (
+    XMail(..)
+  , initialXMail
+  , pushField
+  , pushBody
+  , finalizeMail
+  ) where
 
 import qualified Data.ByteString.Char8 as BS
 import Data.Sequence (fromList)

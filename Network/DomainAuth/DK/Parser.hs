@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.DomainAuth.DK.Parser where
+module Network.DomainAuth.DK.Parser (
+    parseDK
+  ) where
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS

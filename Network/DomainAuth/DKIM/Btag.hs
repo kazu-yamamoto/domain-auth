@@ -1,4 +1,6 @@
-module Network.DomainAuth.DKIM.Btag where
+module Network.DomainAuth.DKIM.Btag (
+    removeBtagValue
+  ) where
 
 import Control.Monad
 import Data.ByteString.Char8

@@ -1,4 +1,6 @@
-module Network.DomainAuth.SPF.Parser (parseSPF) where
+module Network.DomainAuth.SPF.Parser (
+    parseSPF
+  ) where
 
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 as BS (pack)

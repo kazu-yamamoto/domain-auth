@@ -1,6 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.DomainAuth.Mail.Mail where
+module Network.DomainAuth.Mail.Mail (
+    lookupField
+  , fieldsFrom
+  , fieldsAfter
+  , fieldsWith
+  , fieldValueFolded
+  , fieldValueUnfolded
+  , fromBody
+  , fromBodyWith
+  , removeTrailingEmptyLine
+  ) where
 
 import Data.ByteString (ByteString)
 import Data.ByteString.Builder (Builder)

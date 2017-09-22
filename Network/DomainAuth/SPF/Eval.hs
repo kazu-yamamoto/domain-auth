@@ -1,4 +1,8 @@
-module Network.DomainAuth.SPF.Eval (evalSPF, Limit(..), defaultLimit) where
+module Network.DomainAuth.SPF.Eval (
+    evalSPF
+  , Limit(..)
+  , defaultLimit
+  ) where
 
 import Data.IORef
 import Data.IP

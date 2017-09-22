@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.DomainAuth.DKIM.Parser where
+module Network.DomainAuth.DKIM.Parser (
+    parseDKIM
+  ) where
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
