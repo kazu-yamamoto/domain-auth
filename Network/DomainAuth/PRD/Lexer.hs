@@ -14,8 +14,8 @@ concatSpace = unwords
 skipChar :: Char -> Parser ()
 skipChar c = () <$ char c
 
-wsp :: Parser Char
-wsp = oneOf " \t\n"
+skipWsp :: Parser ()
+skipWsp = skipMany $ oneOf " \t\n"
 
 ----------------------------------------------------------------
 
@@ -36,7 +36,7 @@ structured = removeComments <$> many (choice choices)
     choices = [specials,quotedString,domainLiteral,atom,comment]
 
 specials :: Parser String
-specials = toStr <$> (specialChar <* skipMany wsp)
+specials = toStr <$> (specialChar <* skipWsp)
   where
     -- removing "()[]\\\""
     specialChar = oneOf "<>:;@=,."
@@ -48,7 +48,7 @@ atext :: Parser Char
 atext = alphaNum <|> oneOf "!#$%&'*+-/=?^_`{|}~"
 
 atom :: Parser String
-atom = some atext <* skipMany wsp
+atom = some atext <* skipWsp
 
 ----------------------------------------------------------------
 
@@ -58,9 +58,9 @@ dtext = oneOf $ ['!' .. 'Z'] ++ ['^' .. '~']
 domainLiteral :: Parser String
 domainLiteral = do
     skipChar '['
-    ds <- many (some dtext <* skipMany wsp)
+    ds <- many (some dtext <* skipWsp)
     skipChar ']'
-    skipMany wsp
+    skipWsp
     return (concatSpace ds)
 
 ----------------------------------------------------------------
@@ -74,16 +74,19 @@ qcontent = qtext <|> quoted_pair
 quotedString :: Parser String
 quotedString = do
     skipChar '"'
-    skipMany wsp
-    qs <- many (some qcontent <* skipMany wsp)
+    skipWsp
+    qs <- many (some qcontent <* skipWsp)
     skipChar '"'
-    skipMany wsp
+    skipWsp
     return (concatSpace qs)
 
 ----------------------------------------------------------------
 
 vchar :: Parser Char
 vchar = oneOf ['!'..'~']
+
+wsp :: Parser Char
+wsp = oneOf " \t\n"
 
 quoted_pair :: Parser Char
 quoted_pair = skipChar '\\' >> (vchar <|> wsp)
@@ -93,17 +96,17 @@ quoted_pair = skipChar '\\' >> (vchar <|> wsp)
 ctext :: Parser Char
 ctext = oneOf $ ['!' .. '\''] ++ ['*' .. '['] ++ [']' .. '~']
 
-ccontent :: Parser String
-ccontent = some (ctext <|> quoted_pair)
+ccontent :: Parser ()
+ccontent = () <$ some (ctext <|> quoted_pair)
 
-comment' :: Parser String
+comment' :: Parser ()
 comment' = do
     skipChar '('
-    skipMany wsp
-    cs <- many ((ccontent <|> comment') <* skipMany wsp)
+    skipWsp
+    _ <- many ((ccontent <|> comment') <* skipWsp)
     skipChar ')'
-    skipMany wsp
-    return (concatSpace cs)
+    skipWsp
+    return ()
 
 comment :: Parser String
 comment = "" <$ comment'
