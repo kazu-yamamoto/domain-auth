@@ -1,7 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Network.DomainAuth.SPF.Types where
 
 import Data.IP
 import Network.DNS (Domain)
+import Data.ByteString (ByteString)
 
 ----------------------------------------------------------------
 
@@ -10,7 +13,7 @@ data Qualifier = Q_Pass | Q_HardFail | Q_Softfail | Q_Neutral
                  deriving (Eq,Enum,Bounded,Show)
 
 -- Depends on Qualifier
-qualifierSymbol :: String
+qualifierSymbol :: ByteString
 qualifierSymbol = "+-~?"
 
 data SPF = SPF_IPv4Range Qualifier (AddrRange IPv4)
