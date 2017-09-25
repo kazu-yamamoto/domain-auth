@@ -10,7 +10,12 @@ import Data.Attoparsec.ByteString (Parser)
 import qualified Data.Attoparsec.ByteString as P
 import qualified Data.Attoparsec.Combinator as P (option)
 import Data.ByteString as BS
+import Data.ByteString.Builder (Builder)
+import Data.ByteString.Lazy (toStrict)
+import qualified Data.ByteString.Builder as B
 import Data.ByteString.Char8 ()
+import Data.Monoid
+import Data.Word8
 
 -- |
 --
@@ -19,19 +24,24 @@ import Data.ByteString.Char8 ()
 removeBtagValue :: ByteString -> ByteString
 removeBtagValue inp = case P.parseOnly remBtagValue inp of
   Left _   -> ""
-  Right bs -> bs
+  Right bs -> toStrict $ B.toLazyByteString bs
 
-remBtagValue :: Parser ByteString
-remBtagValue = BS.append <$> inFix btag <*> P.takeWhile (const True)
+remBtagValue :: Parser Builder
+remBtagValue = (<>) <$> inFix btag <*> anyString
+  where
+    anyString = B.byteString <$> P.takeWhile (const True)
 
-inFix :: Parser ByteString -> Parser ByteString
-inFix p = P.try p <|> BS.cons <$> P.anyWord8 <*> inFix p
+inFix :: Parser Builder -> Parser Builder
+inFix p = P.try p <|> (<>) <$> anyWord8 <*> inFix p
+  where
+    anyWord8 = B.word8 <$> P.anyWord8
 
-btag :: Parser ByteString
+btag :: Parser Builder
 btag = do
-    b <- P.string "b"
-    w <- P.takeWhile (P.inClass " \t\r\n")
-    e <- P.string "="
+    b <- B.word8 <$> P.word8 _b
+    w <- B.byteString <$> P.takeWhile (P.inClass " \t\r\n")
+    e <- B.word8 <$> P.word8 _equal
     void $ P.takeWhile1 (P.notInClass ";")
-    s <- P.option "" (P.string ";")
-    return $ BS.concat [b,w,e,s]
+    s <- P.option mempty (B.word8 <$> P.word8 _semicolon)
+    return (b <> w <> e <> s)
+
