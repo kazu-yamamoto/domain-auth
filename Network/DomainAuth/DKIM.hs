@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- | A library for DKIM (<http://www.ietf.org/rfc/rfc4071>).
+-- | A library for DKIM (<http://www.ietf.org/rfc/rfc6376.txt>).
 --   Currently, only receiver side is implemented.
 
 module Network.DomainAuth.DKIM (

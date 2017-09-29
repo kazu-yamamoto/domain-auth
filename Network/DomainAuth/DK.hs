@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- | A library for DomainKeys (<http://www.ietf.org/rfc/rfc4070>).
+-- | A library for DomainKeys (<http://www.ietf.org/rfc/rfc4870.txt>).
 --   Currently, only receiver side is implemented.
 
 module Network.DomainAuth.DK (

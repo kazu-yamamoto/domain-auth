@@ -1,5 +1,5 @@
--- | A library for SPF(<http://www.ietf.org/rfc/rfc4408>)
---   and Sender-ID(<http://www.ietf.org/rfc/rfc4406>).
+-- | A library for SPF(<http://www.ietf.org/rfc/rfc4408.txt>)
+--   and Sender-ID(<http://www.ietf.org/rfc/rfc4406.txt>).
 
 module Network.DomainAuth.SPF (
     runSPF
