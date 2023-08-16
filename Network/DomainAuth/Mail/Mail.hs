@@ -49,15 +49,12 @@ fieldsAfter key = safeTail . fieldsFrom key
 
 -- | Obtaining all fields with DKIM algorithm.
 fieldsWith :: [CanonFieldKey] -> Header -> Header
-fieldsWith [] _ = []
-fieldsWith _ [] = []
-fieldsWith (k:ks) is
-  | fs == []  = fieldsWith (k:ks) (tail is')
-  | otherwise = take len (reverse fs) ++ fieldsWith ks' is'
-  where
-    (fs,is') = span (\fld -> fieldSearchKey fld == k) is
-    (kx,ks') = span (==k) ks
-    len = length kx + 1 -- including k
+fieldsWith fieldsToFind fieldsToSearch = filter (\fld -> fieldSearchKey fld `elem` uniqueFieldsToFind) fieldsToSearch
+  where 
+    mkFieldsUnique [] = []
+    mkFieldsUnique (x:xs) | x `elem` xs = mkFieldsUnique xs
+                          | otherwise   = x : mkFieldsUnique xs
+    uniqueFieldsToFind = mkFieldsUnique fieldsToFind
 
 ----------------------------------------------------------------
 
