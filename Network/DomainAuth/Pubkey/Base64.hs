@@ -11,7 +11,6 @@ import Data.ByteString.Builder (Builder)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Builder as BB
 import qualified Data.ByteString.Lazy as BL
-import Data.Monoid ((<>))
 import Data.Word
 import Network.DomainAuth.Utils
 

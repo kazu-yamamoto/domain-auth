@@ -7,7 +7,6 @@ module Network.DomainAuth.PRD.Lexer (
 import Control.Applicative
 import Data.Attoparsec.ByteString (Parser)
 import qualified Data.Attoparsec.ByteString as P
-import qualified Data.Attoparsec.Combinator as P (choice)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import Data.ByteString.Char8 ()

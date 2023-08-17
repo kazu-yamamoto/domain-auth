@@ -8,13 +8,10 @@ import Control.Applicative
 import Control.Monad
 import Data.Attoparsec.ByteString (Parser)
 import qualified Data.Attoparsec.ByteString as P
-import qualified Data.Attoparsec.Combinator as P (option)
 import Data.ByteString as BS
 import Data.ByteString.Builder (Builder)
-import Data.ByteString.Lazy (toStrict)
 import qualified Data.ByteString.Builder as B
 import Data.ByteString.Char8 ()
-import Data.Monoid
 import Data.Word8
 
 -- |
