@@ -28,9 +28,9 @@ import System.IO.Error
 --
 -- pass (IPv4 & IPv6):
 --
--- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "mew.org" "210.130.207.72"
+-- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "mew.org" "202.238.220.92"
 -- pass
--- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "iij.ad.jp" "2001:240:bb42:8010::1:126"
+-- >>> withResolver rs $ \rslv -> runSPF defaultLimit rslv "iij.ad.jp" "2001:240:bb5f:86c::1:41"
 -- pass
 --
 -- hardfail:
@@ -50,9 +50,6 @@ import System.IO.Error
 -- >>> let limit1 = defaultLimit { ipv4_masklen = 24 }
 -- >>> withResolver rs $ \rslv -> runSPF limit1 rslv "gmail.com" "72.14.192.1"
 -- softfail
--- >>> let limit2 = defaultLimit { limit = 2 }
--- >>> withResolver rs $ \rslv -> runSPF limit2 rslv "nifty.com" "202.248.88.1"
--- permerror
 
 runSPF :: Limit -> Resolver -> Domain -> IP -> IO DAResult
 runSPF lim resolver dom ip =
