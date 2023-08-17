@@ -48,12 +48,12 @@ library
                       , asn1-types
                       , bytestring
                       , containers
-                      , cryptonite
+                      , crypton
                       , dns >= 1.0
                       , iproute
                       , memory
                       , network
-                      , x509
+                      , crypton-x509
                       , word8
 
 Test-Suite doctest
@@ -68,4 +68,4 @@ Test-Suite doctest
 
 Source-Repository head
   Type:                 git
-  Location:             git://github.com/kazu-yamamoto/domain-auth.git
+  Location:             https://github.com/kazu-yamamoto/domain-auth
