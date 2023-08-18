@@ -19,6 +19,7 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Foldable as F (foldr)
 import Data.List
+import Data.Maybe (catMaybes)
 import Data.Sequence (Seq, viewr, ViewR(..), empty)
 import Network.DomainAuth.Mail.Types
 import qualified Network.DomainAuth.Utils as B (empty)
@@ -49,15 +50,36 @@ fieldsAfter key = safeTail . fieldsFrom key
 
 -- | Obtaining all fields with DKIM algorithm.
 fieldsWith :: [CanonFieldKey] -> Header -> Header
-fieldsWith [] _ = []
-fieldsWith _ [] = []
-fieldsWith (k:ks) is
-  | fs == []  = fieldsWith (k:ks) (tail is')
-  | otherwise = take len (reverse fs) ++ fieldsWith ks' is'
-  where
-    (fs,is') = span (\fld -> fieldSearchKey fld == k) is
-    (kx,ks') = span (==k) ks
-    len = length kx + 1 -- including k
+fieldsWith kx hx = catMaybes $ enm kx hx (\k h -> k == fieldSearchKey h)
+
+-- >>> enm [1,2,3] [1,1,2,2,2,3,4,5] (==)
+-- [Just 1,Just 2,Just 3]
+-- >>> enm [1,1,2,3] [1,1,2,2,2,3,4,5] (==)
+-- [Just 1,Just 1,Just 2,Just 3]
+-- >>> enm [1,1,1,2,3] [1,1,2,2,2,3,4,5] (==)
+-- [Just 1,Just 1,Nothing,Just 2,Just 3]
+enm :: [a] -> [b] -> (a -> b -> Bool) -> [Maybe b]
+enm [] _ _ = []
+enm _ [] _ = []
+enm (k:kx) hs0 eq = case fnd (eq k) hs0 of
+  Nothing -> Nothing : enm kx hs0 eq
+  Just (x,hs) -> Just x : enm kx hs eq
+
+-- >>> fnd (== 1) [1,2,3]
+-- Just (1,[2,3])
+-- >>> fnd (== 2) [1,2,3]
+-- Just (2,[1,3])
+-- >>> fnd (== 3) [1,2,3]
+-- Just (3,[1,2])
+-- >>> fnd (== 4) [1,2,3]
+-- Nothing
+fnd :: (a -> Bool) -> [a] -> Maybe (a,[a])
+fnd _ [] = Nothing
+fnd p (x:xs)
+  | p x = Just (x, xs)
+  | otherwise = case fnd p xs of
+      Nothing -> Nothing
+      Just (y,ys) -> Just (y, x:ys)
 
 ----------------------------------------------------------------
 
