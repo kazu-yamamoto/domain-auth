@@ -25,6 +25,10 @@ import Network.DomainAuth.Mail.Types
 import qualified Network.DomainAuth.Utils as B (empty)
 import Network.DomainAuth.Utils hiding (empty)
 
+-- $setup
+-- >>> :set -XOverloadedStrings
+-- >>> import Data.ByteString.Char8
+
 ----------------------------------------------------------------
 
 -- | Looking up 'Field' from 'Header' with 'FieldKey'.
@@ -49,6 +53,9 @@ fieldsAfter key = safeTail . fieldsFrom key
 -- RFC 4871 is ambiguous, so implement only normal case.
 
 -- | Obtaining all fields with DKIM algorithm.
+--
+-- >>> fieldsWith ["from","to","subject","date","message-id"] [Field "from" "From" ["foo"],Field "to" "To" ["bar"],Field "subject" "Subject" ["baz"],Field "date" "Date" ["qux"],Field "message-id" "Message-Id" ["quux"], Field "received" "Received" ["fiz"], Field "filtered-out" "Filtered-Out" ["buzz"], Field "not-needed" "Not-Needed" ["fizz"]]
+-- [Field {fieldSearchKey = "from", fieldKey = "From", fieldValue = ["foo"]},Field {fieldSearchKey = "to", fieldKey = "To", fieldValue = ["bar"]},Field {fieldSearchKey = "subject", fieldKey = "Subject", fieldValue = ["baz"]},Field {fieldSearchKey = "date", fieldKey = "Date", fieldValue = ["qux"]},Field {fieldSearchKey = "message-id", fieldKey = "Message-Id", fieldValue = ["quux"]}]
 fieldsWith :: [CanonFieldKey] -> Header -> Header
 fieldsWith kx hx = catMaybes $ enm kx hx (\k h -> k == fieldSearchKey h)
 
