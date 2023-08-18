@@ -59,6 +59,29 @@ fieldsAfter key = safeTail . fieldsFrom key
 fieldsWith :: [CanonFieldKey] -> Header -> Header
 fieldsWith kx hx = catMaybes $ enm kx hx (\k h -> k == fieldSearchKey h)
 
+-- | RFC 6376 says:
+--    Signers MAY claim to have signed header fields that do not exist
+--    (that is, Signers MAY include the header field name in the "h=" tag
+--    even if that header field does not exist in the message).  When
+--    computing the signature, the nonexisting header field MUST be treated
+--    as the null string (including the header field name, header field
+--    value, all punctuation, and the trailing CRLF).
+--
+--       INFORMATIVE RATIONALE: This allows Signers to explicitly assert
+--       the absence of a header field; if that header field is added
+--       later, the signature will fail.
+--
+--      INFORMATIVE NOTE: A header field name need only be listed once
+--      more than the actual number of that header field in a message at
+--      the time of signing in order to prevent any further additions.
+--      For example, if there is a single Comments header field at the
+--      time of signing, listing Comments twice in the "h=" tag is
+--      sufficient to prevent any number of Comments header fields from
+--      being appended; it is not necessary (but is legal) to list
+--      Comments three or more times in the "h=" tag.
+--
+-- 'Notihng' represents the null above.
+--
 -- >>> enm [1,2,3] [1,1,2,2,2,3,4,5] (==)
 -- [Just 1,Just 2,Just 3]
 -- >>> enm [1,1,2,3] [1,1,2,2,2,3,4,5] (==)
