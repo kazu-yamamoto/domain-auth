@@ -19,10 +19,15 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Foldable as F (foldr)
 import Data.List
+import Data.Maybe (catMaybes)
 import Data.Sequence (Seq, viewr, ViewR(..), empty)
 import Network.DomainAuth.Mail.Types
 import qualified Network.DomainAuth.Utils as B (empty)
 import Network.DomainAuth.Utils hiding (empty)
+
+-- $setup
+-- >>> :set -XOverloadedStrings
+-- >>> import Data.ByteString.Char8
 
 ----------------------------------------------------------------
 
@@ -48,16 +53,63 @@ fieldsAfter key = safeTail . fieldsFrom key
 -- RFC 4871 is ambiguous, so implement only normal case.
 
 -- | Obtaining all fields with DKIM algorithm.
+--
+-- >>> fieldsWith ["from","to","subject","date","message-id"] [Field "from" "From" ["foo"],Field "to" "To" ["bar"],Field "subject" "Subject" ["baz"],Field "date" "Date" ["qux"],Field "message-id" "Message-Id" ["quux"], Field "received" "Received" ["fiz"], Field "filtered-out" "Filtered-Out" ["buzz"], Field "not-needed" "Not-Needed" ["fizz"]]
+-- [Field {fieldSearchKey = "from", fieldKey = "From", fieldValue = ["foo"]},Field {fieldSearchKey = "to", fieldKey = "To", fieldValue = ["bar"]},Field {fieldSearchKey = "subject", fieldKey = "Subject", fieldValue = ["baz"]},Field {fieldSearchKey = "date", fieldKey = "Date", fieldValue = ["qux"]},Field {fieldSearchKey = "message-id", fieldKey = "Message-Id", fieldValue = ["quux"]}]
 fieldsWith :: [CanonFieldKey] -> Header -> Header
-fieldsWith [] _ = []
-fieldsWith _ [] = []
-fieldsWith (k:ks) is
-  | fs == []  = fieldsWith (k:ks) (tail is')
-  | otherwise = take len (reverse fs) ++ fieldsWith ks' is'
-  where
-    (fs,is') = span (\fld -> fieldSearchKey fld == k) is
-    (kx,ks') = span (==k) ks
-    len = length kx + 1 -- including k
+fieldsWith kx hx = catMaybes $ enm kx hx (\k h -> k == fieldSearchKey h)
+
+-- | RFC 6376 says:
+--    Signers MAY claim to have signed header fields that do not exist
+--    (that is, Signers MAY include the header field name in the "h=" tag
+--    even if that header field does not exist in the message).  When
+--    computing the signature, the nonexisting header field MUST be treated
+--    as the null string (including the header field name, header field
+--    value, all punctuation, and the trailing CRLF).
+--
+--       INFORMATIVE RATIONALE: This allows Signers to explicitly assert
+--       the absence of a header field; if that header field is added
+--       later, the signature will fail.
+--
+--      INFORMATIVE NOTE: A header field name need only be listed once
+--      more than the actual number of that header field in a message at
+--      the time of signing in order to prevent any further additions.
+--      For example, if there is a single Comments header field at the
+--      time of signing, listing Comments twice in the "h=" tag is
+--      sufficient to prevent any number of Comments header fields from
+--      being appended; it is not necessary (but is legal) to list
+--      Comments three or more times in the "h=" tag.
+--
+-- 'Notihng' represents the null above.
+--
+-- >>> enm [1,2,3] [1,1,2,2,2,3,4,5] (==)
+-- [Just 1,Just 2,Just 3]
+-- >>> enm [1,1,2,3] [1,1,2,2,2,3,4,5] (==)
+-- [Just 1,Just 1,Just 2,Just 3]
+-- >>> enm [1,1,1,2,3] [1,1,2,2,2,3,4,5] (==)
+-- [Just 1,Just 1,Nothing,Just 2,Just 3]
+enm :: [a] -> [b] -> (a -> b -> Bool) -> [Maybe b]
+enm [] _ _ = []
+enm _ [] _ = []
+enm (k:kx) hs0 eq = case fnd (eq k) hs0 of
+  Nothing -> Nothing : enm kx hs0 eq
+  Just (x,hs) -> Just x : enm kx hs eq
+
+-- >>> fnd (== 1) [1,2,3]
+-- Just (1,[2,3])
+-- >>> fnd (== 2) [1,2,3]
+-- Just (2,[1,3])
+-- >>> fnd (== 3) [1,2,3]
+-- Just (3,[1,2])
+-- >>> fnd (== 4) [1,2,3]
+-- Nothing
+fnd :: (a -> Bool) -> [a] -> Maybe (a,[a])
+fnd _ [] = Nothing
+fnd p (x:xs)
+  | p x = Just (x, xs)
+  | otherwise = case fnd p xs of
+      Nothing -> Nothing
+      Just (y,ys) -> Just (y, x:ys)
 
 ----------------------------------------------------------------
 
